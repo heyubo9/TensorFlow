@@ -36,12 +36,6 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         self.flow = input_data.read_data_sets("MNIST_data/", one_hot=True)
 
     def __model_cnn(self):
-        with tf.name_scope('input'):
-            self._x = tf.placeholder(tf.float32,[None,self._input_size],name = 'input')
-
-        edge_len = int(math.sqrt(self._input_size))
-        assert edge_len * edge_len == self._input_size
-        self.__ximage = tf.reshape(self._x,[-1,edge_len,edge_len,1])
         with tf.name_scope('cnn_model'):
             conv1 = self._add_conv_layer(self.__ximage,1,5,5,[1,1,1,1],1,32,stddev = 0.1)
             norm1 = self._add_pool(conv1, 1, [1,2,2,1], [1,2,2,1])
@@ -67,6 +61,12 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         """train the model described above
         """
         self.__sess = tf.Session()
+        with tf.name_scope('input'):
+            self._x = tf.placeholder(tf.float32,[None,self._input_size],name = 'input')
+            edge_len = int(math.sqrt(self._input_size))
+            assert edge_len * edge_len == self._input_size
+            self.__ximage = tf.reshape(self._x, [-1, edge_len, edge_len, 1])
+
         with tf.name_scope('cnn') as scope:
             train_step, accuracy= self.__model_cnn()
 
@@ -75,15 +75,15 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
             #merge the summary and write it to the tensorboard
             merge = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES, scope))
-            train_writer = tf.summary.FileWriter(self._log_dir+'/train/log',self.__sess.graph)
-            test_writer = tf.summary.FileWriter(self._log_dir+'/test/log',self.__sess.graph)
+            train_writer = tf.summary.FileWriter(self._log_dir + '/train',self.__sess.graph)
+            test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
 
         for i in range(self._step):
             batch_xs, batch_ys = self.flow.train.next_batch(self._batch_size)
             self.__sess.run(train_step, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self._keep_prob : self._dropout})
             accuarcy = self.__sess.run(accuracy, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self._keep_prob : self._dropout})
             summary = self.__sess.run(merge, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self._keep_prob : 1})
-            train_writer.add_summary(summary, i)
+            train_writer.add_summary(summary, i + 1)
             if i % 100 == 99:
                 print('round {} accuarcy: {:.6f}'.format(i + 1, accuarcy))
 
@@ -91,6 +91,9 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         self.__sess.close()
 
     def __model_rnn(self, input):
+        ###TODO
+        #add some information to enhance the performance fo the malware flow detection
+
         #the shape became [batch_size, embedding_size(which is cluster_num * conv_output_feature), 1],
         input = tf.expand_dims(input, axis = 1, name = 'input')
         #then the input's shape became [batch_size, embedding_size, num_step(sequence length)]
@@ -98,8 +101,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         #for i in range(self.num_step):
         #    list.append(input_feature)
         #input = tf.parallel_stack(list)
-        ###TODO
-        #add the LSTM kernel
+
         #reshape the input
         input = tf.transpose(input, [1, 0, 2])
         input= tf.reshape(input, [-1, self.embedding_size])
@@ -129,7 +131,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
         graph = tf.get_default_graph()
         self._x = graph.get_tensor_by_name('input/input:0')
-        input_feature = graph.get_tensor_by_name('cnn_model/vald/output:0')
+        input_feature = graph.get_tensor_by_name('cnn/cnn_model/vald/output:0')
         input_feature = tf.stop_gradient(input_feature)
 
         with tf.name_scope('rnn') as scope:
@@ -140,14 +142,14 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
             #merge the rnn summary and write it to the tensorboard
             merge = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES, scope))
-            train_writer = tf.summary.FileWriter(self._log_dir+'/train/log',self.__sess.graph)
-            test_writer = tf.summary.FileWriter(self._log_dir+'/test/log',self.__sess.graph)
+            train_writer = tf.summary.FileWriter(self._log_dir + '/train',self.__sess.graph)
+            test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
 
         for i in range(self._step):
             batch_xs, batch_ys = self.flow.train.next_batch(self._batch_size)
             self.__sess.run(train_step, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
             accuarcy = self.__sess.run(accuracy, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
             summary = self.__sess.run(merge, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
-            train_writer.add_summary(summary, i)
+            train_writer.add_summary(summary, i + 1)
             if i % 100 == 99:
                 print('round {} accuarcy: {:.6f}'.format(i + 1, accuarcy))
