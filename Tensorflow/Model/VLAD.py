@@ -9,6 +9,10 @@ import tensorflow as tf
 
 class NetVLAD(object):
     def __init__(self, cluster_num):
+        """the netvlad class initialization
+
+        @param cluster_num : the number of cluster center
+        """
         self._cluser_num = cluster_num
 
     def get_cluster_num(self):
@@ -36,7 +40,17 @@ class NetVLAD(object):
         init = tf.constant(constant, shape = shape)
         return tf.Variable(init, dtype = tf.float32, name = 'bias')
 
-    def _add_vald_layer(self, input, channel_in, mean, stddev, name):
+    def _add_vald_layer(self, input, channel_in, name, mean = 0.0, stddev = 0.1):
+        """add a netvald layer in the neural network model
+
+        for future development:
+
+        @param input: the input tensor
+        @param channel_in : the former layer output feature num
+        @param name : the layer scope name
+        @param mean : the mean of the weight and bais
+        @param weight : the standard deviation
+        """
         with tf.variable_scope(name) as scope:
             #initialize the variable
             with tf.name_scope('weight'):
@@ -54,15 +68,15 @@ class NetVLAD(object):
                 self.__variable_summaries(center)
 
             input_reshape = tf.reshape(input, shape = [-1, (input.get_shape().as_list()[1] * input.get_shape().as_list()[2]), channel_in], name = 'reshape')
-            input_norm = tf.nn.l2_normalize(input_reshape, dim = 1)
+            input_norm = tf.nn.l2_normalize(input_reshape, axis = 1)
             descriptor = tf.expand_dims(input_norm, axis = -1, name = 'expand_dim')
             print(descriptor.get_shape())
             conv_vlad = tf.nn.convolution(descriptor, weight, padding = 'VALID')
             bias = tf.nn.bias_add(conv_vlad, bias)
-            a_k = tf.nn.softmax(tf.squeeze(bias, axis = 2), dim = -1, name = 'vlad_softmax')
+            a_k = tf.nn.softmax(tf.squeeze(bias, axis = 2), axis = -1, name = 'vlad_softmax')
 
             V1 = tf.matmul(input_reshape, a_k, transpose_a = True)
-            V2 = tf.multiply(tf.reduce_sum(a_k, axis = 1, keep_dims = True), center)
+            V2 = tf.multiply(tf.reduce_sum(a_k, axis = 1, keepdims = True), center)
             V = tf.subtract(V1, V2)
             print(V.get_shape())
             norm = tf.nn.l2_normalize(tf.reshape(tf.nn.l2_normalize(V, dim = 1), shape = [-1, channel_in * self._cluser_num]), dim = 1, name = 'output')

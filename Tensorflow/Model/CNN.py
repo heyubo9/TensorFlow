@@ -15,6 +15,13 @@ from tensorboard.plugins import projector
 
 class CNN():
     def __init__(self, learning_rate = 0.001, step = 1000, batch_size = 100, dropout = 0.9):
+        """initialize the cnn class
+
+        @param learning_rate : the cnn model's learning_rate
+        @param step : the step to iterate the model learning
+        @param batch_size : the number of image in each batch
+        @param dropout : the dropout ratio in the fully_connect layer, if 1 ,do not use dropout
+        """
         self._learning_rate = learning_rate
         self._step = step
         self._batch_size = batch_size

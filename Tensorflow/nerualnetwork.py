@@ -50,7 +50,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             #fc = self._add_fclayer(vald_output, 1, 1024, 1024, stddev = 0.1)
             predict = self._output_layer(vald_output,64 * self._cluser_num,self._output_size, stddev = 0.1)
         with tf.name_scope('cnn_loss'):
-            cross_entropy = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits(logits = predict, labels = self._accurate_data))
+            cross_entropy = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits_v2(logits = predict, labels = self._accurate_data))
             loss_scalar = tf.summary.scalar('cross_entropy', cross_entropy)
         with tf.name_scope('cnn_optimizer'):
             #train_step = tf.train.GradientDescentOptimizer(self._learning_rate).minimize(cross_entropy)
@@ -110,7 +110,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             #double input feature number
             output = self._add_liner_layer(lstm_output, 2 * self.hidden_neural_size, self.class_num)
         with tf.name_scope('rnn_loss'):
-            loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits = output, labels =  self._accurate_data))
+            loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = output, labels =  self._accurate_data))
             loss_scalar = tf.summary.scalar('cross_entropy', loss)
         with tf.name_scope('rnn_optimizer'):
             optimizer = tf.train.AdamOptimizer(learning_rate = self._learning_rate).minimize(loss)
@@ -121,8 +121,6 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         return optimizer, accuarcy
 
     def train_rnn(self):
-        ###TODO
-        #train rnn model
         self.__sess = tf.Session()
 
         self.__saver = tf.train.import_meta_graph('./saver/model.meta')
@@ -139,7 +137,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             init = tf.global_variables_initializer()
             self.__sess.run(init)
 
-            #merge the summary and write it to the tensorboard
+            #merge the rnn summary and write it to the tensorboard
             merge = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES, scope))
             train_writer = tf.summary.FileWriter(self._log_dir+'/train/log',self.__sess.graph)
             test_writer = tf.summary.FileWriter(self._log_dir+'/test/log',self.__sess.graph)
