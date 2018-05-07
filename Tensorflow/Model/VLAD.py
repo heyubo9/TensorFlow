@@ -40,7 +40,7 @@ class NetVLAD(object):
         init = tf.constant(constant, shape = shape)
         return tf.Variable(init, dtype = tf.float32, name = 'bias')
 
-    def _add_vald_layer(self, input, channel_in, name, mean = 0.0, stddev = 0.1):
+    def _add_vald_layer(self, input, channel_in, name, mean = 0.0, stddev = 0.001):
         """add a netvald layer in the neural network model
 
         for future development:

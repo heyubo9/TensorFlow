@@ -46,7 +46,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             norm1 = self._add_pool(conv1, 1, [1,2,2,1], [1,2,2,1])
             conv2 = self._add_conv_layer(norm1,3,5,5,[1,1,1,1],32,64,stddev = 0.1)
             norm2 = self._add_pool(conv2, 1, [1,2,2,1], [1,2,2,1])
-            vald_output = self._add_vald_layer(norm2, 64, 0.0, 0.001, 'vald')
+            vald_output = self._add_vald_layer(norm2, 64, 'vald')
             #fc = self._add_fclayer(vald_output, 1, 1024, 1024, stddev = 0.1)
             predict = self._output_layer(vald_output,64 * self._cluser_num,self._output_size, stddev = 0.1)
         with tf.name_scope('cnn_loss'):
