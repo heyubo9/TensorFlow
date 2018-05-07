@@ -29,9 +29,6 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         with tf.name_scope('output'):
             self._accurate_data = tf.placeholder(tf.float32,[None,self._output_size],name = 'output')
 
-        edge_len = int(math.sqrt(input_size))
-        assert edge_len * edge_len == input_size
-        self.__ximage = tf.reshape(self._x,[-1,edge_len,edge_len,1])
 
         self.__saver = tf.train.Saver(max_to_keep = 1)
 
@@ -41,6 +38,10 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
     def __model_cnn(self):
         with tf.name_scope('input'):
             self._x = tf.placeholder(tf.float32,[None,self._input_size],name = 'input')
+
+        edge_len = int(math.sqrt(self._input_size))
+        assert edge_len * edge_len == self._input_size
+        self.__ximage = tf.reshape(self._x,[-1,edge_len,edge_len,1])
         with tf.name_scope('cnn_model'):
             conv1 = self._add_conv_layer(self.__ximage,1,5,5,[1,1,1,1],1,32,stddev = 0.1)
             norm1 = self._add_pool(conv1, 1, [1,2,2,1], [1,2,2,1])

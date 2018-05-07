@@ -94,7 +94,7 @@ def main():
     #exam = mnist.MNSIT_Train(784,10)
     #exam.set_log_dir('./TensorBoard')
     #exam.train()
-    exam = nn(28*28, int(global_var.get_value('classnum')),cluster_num = 100, hidden_neural_size = 128, num_step = 1, step = 5000, learning_rate = 0.002, batch_size = 64)
+    exam = nn(28*28, int(global_var.get_value('classnum')),cluster_num = 100, hidden_neural_size = 100, num_step = 1, step = 5000, learning_rate = 0.002, batch_size = 64)
     exam.set_log_dir(log_dir)
     exam.train_cnn()
     exam.train_rnn()
