@@ -240,3 +240,7 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/Tensorflow/TensorBoard
+/Tensorflow.pyproj
+/Tensorflow/saver
+/Tensorflow/MNIST_data
