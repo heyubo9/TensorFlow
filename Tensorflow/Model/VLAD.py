@@ -79,6 +79,6 @@ class NetVLAD(object):
             V2 = tf.multiply(tf.reduce_sum(a_k, axis = 1, keepdims = True), center)
             V = tf.subtract(V1, V2)
             print(V.get_shape())
-            norm = tf.nn.l2_normalize(tf.reshape(tf.nn.l2_normalize(V, dim = 1), shape = [-1, channel_in * self._cluser_num]), dim = 1, name = 'output')
+            norm = tf.nn.l2_normalize(tf.reshape(tf.nn.l2_normalize(V, axis = 1), shape = [-1, channel_in * self._cluser_num]), axis = 1, name = 'output')
             
         return norm
