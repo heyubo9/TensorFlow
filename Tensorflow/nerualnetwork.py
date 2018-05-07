@@ -26,8 +26,6 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         VLAD.NetVLAD.__init__(self, cluster_num)
         LSTM.LSTM.__init__(self, output_size, 64 * cluster_num, hidden_neural_size, num_step, dropout, is_training)
         
-        with tf.name_scope('input'):
-            self._x = tf.placeholder(tf.float32,[None,self._input_size],name = 'input')
         with tf.name_scope('output'):
             self._accurate_data = tf.placeholder(tf.float32,[None,self._output_size],name = 'output')
 
@@ -41,6 +39,8 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         self.flow = input_data.read_data_sets("MNIST_data/", one_hot=True)
 
     def __model_cnn(self):
+        with tf.name_scope('input'):
+            self._x = tf.placeholder(tf.float32,[None,self._input_size],name = 'input')
         with tf.name_scope('cnn_model'):
             conv1 = self._add_conv_layer(self.__ximage,1,5,5,[1,1,1,1],1,32,stddev = 0.1)
             norm1 = self._add_pool(conv1, 1, [1,2,2,1], [1,2,2,1])
