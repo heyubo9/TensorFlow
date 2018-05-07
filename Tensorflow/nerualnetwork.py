@@ -60,7 +60,8 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
     def train_cnn(self):
         """train the model described above
         """
-        self.__sess = tf.Session()
+        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
+        self.__sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         with tf.name_scope('input'):
             self._x = tf.placeholder(tf.float32,[None,self._input_size],name = 'input')
             edge_len = int(math.sqrt(self._input_size))
@@ -75,8 +76,8 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
             #merge the summary and write it to the tensorboard
             merge = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES, scope))
-            train_writer = tf.summary.FileWriter(self._log_dir + '/train',self.__sess.graph)
-            test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
+            train_writer = tf.summary.FileWriter(self._log_dir + '/train/log', self.__sess.graph)
+            #test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
 
         for i in range(self._step):
             batch_xs, batch_ys = self.flow.train.next_batch(self._batch_size)
@@ -88,7 +89,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
                 print('round {} accuarcy: {:.6f}'.format(i + 1, accuarcy))
 
         self.__saver.save(self.__sess, './saver/model')
-        self.__sess.close()
+        #self.__sess.close()
 
     def __model_rnn(self, input):
         ###TODO
@@ -119,15 +120,18 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             optimizer = tf.train.AdamOptimizer(learning_rate = self._learning_rate).minimize(loss)
         with tf.name_scope('rnn_accuarcy'):
             correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(self._accurate_data, 1))
-            accuarcy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+            accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+            accu_scalar = tf.summary.scalar('accuracy', accuracy)
 
-        return optimizer, accuarcy
+        return optimizer, accuracy
 
     def train_rnn(self):
-        self.__sess = tf.Session()
+        print('run lstm neural network')
 
-        self.__saver = tf.train.import_meta_graph('./saver/model.meta')
-        self.__saver.restore(self.__sess, tf.train.latest_checkpoint('./saver/'))
+        #self.__sess = tf.Session()
+
+        #self.__saver = tf.train.import_meta_graph('./saver/model.meta')
+        #self.__saver.restore(self.__sess, tf.train.latest_checkpoint('./saver/'))
 
         graph = tf.get_default_graph()
         self._x = graph.get_tensor_by_name('input/input:0')
@@ -142,14 +146,14 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
             #merge the rnn summary and write it to the tensorboard
             merge = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES, scope))
-            train_writer = tf.summary.FileWriter(self._log_dir + '/train',self.__sess.graph)
-            test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
+            train_writer = tf.summary.FileWriter(self._log_dir + '/train/log',self.__sess.graph)
+            #test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
 
         for i in range(self._step):
             batch_xs, batch_ys = self.flow.train.next_batch(self._batch_size)
             self.__sess.run(train_step, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
             accuarcy = self.__sess.run(accuracy, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
-            summary = self.__sess.run(merge, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
+            summary = self.__sess.run(merge, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : 1})
             train_writer.add_summary(summary, i + 1)
             if i % 100 == 99:
                 print('round {} accuarcy: {:.6f}'.format(i + 1, accuarcy))

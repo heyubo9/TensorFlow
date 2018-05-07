@@ -88,16 +88,16 @@ def main():
 
     #Neural Network
     log_dir = global_var.get_value('log_dir')
-    if tf.gfile.Exists(log_dir):
-        tf.gfile.DeleteRecursively(log_dir)
-    tf.gfile.MakeDirs(log_dir)
+    #if tf.gfile.Exists(log_dir):
+    #    tf.gfile.DeleteRecursively(log_dir)
+    #tf.gfile.MakeDirs(log_dir)
     #exam = mnist.MNSIT_Train(784,10)
     #exam.set_log_dir('./TensorBoard')
     #exam.train()
     exam = nn(28*28, int(global_var.get_value('classnum')),cluster_num = 128, hidden_neural_size = 128, num_step = 1, step = 5000, learning_rate = 0.002, batch_size = 100)
-    exam.set_log_dir(log_dir + '\cnn')
+    exam.set_log_dir(log_dir + '/cnn')
     exam.train_cnn()
-    exam.set_log_dir(log_dir + '\rnn')
+    exam.set_log_dir(log_dir + '/rnn')
     exam.train_rnn()
 
     #input the train dataset

@@ -261,3 +261,8 @@ ModelManifest.xml
 /TensorBoard/test/log/events.out.tfevents.1525658634.HEYUBO
 /MNIST_data/train-labels-idx1-ubyte.gz
 /TensorBoard/train/log/events.out.tfevents.1525658633.HEYUBO
+/saver/checkpoint
+*.data-00000-of-00001
+*.index
+*.HEYUBO
+*.pyc

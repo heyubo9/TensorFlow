@@ -11,7 +11,7 @@
     <OutputPath>.</OutputPath>
     <ProjectTypeGuids>{888888a0-9f3d-457c-b088-3a5042f75d52}</ProjectTypeGuids>
     <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <InterpreterId>{9a7a9026-48c1-4688-9d5d-e5699d47d074}</InterpreterId>
+    <InterpreterId>{a2bea184-8f13-465d-a6ff-56d4853c07e8}</InterpreterId>
     <InterpreterVersion>3.5</InterpreterVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'" />
@@ -35,14 +35,63 @@
     <Compile Include="Tensorflow\pcap_reader.py" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="TensorBoard\" />
+    <Folder Include="TensorBoard\cnn\" />
+    <Folder Include="TensorBoard\cnn\test\" />
+    <Folder Include="TensorBoard\cnn\train\" />
+    <Folder Include="TensorBoard\rnn\" />
+    <Folder Include="TensorBoard\rnn\test\" />
+    <Folder Include="TensorBoard\rnn\train\" />
     <Folder Include="Tensorflow" />
     <Folder Include="Tensorflow\Model" />
   </ItemGroup>
   <ItemGroup>
-    <InterpreterReference Include="{9a7a9026-48c1-4688-9d5d-e5699d47d074}\3.5" />
+    <InterpreterReference Include="{a2bea184-8f13-465d-a6ff-56d4853c07e8}\3.5" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="main.conf" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525680393.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525681369.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525681433.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525682091.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525682238.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525682337.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525682468.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525682554.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525682658.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525683625.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525686645.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525687412.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525687480.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525687565.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525690699.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525690839.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525691595.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525692015.HEYUBO" />
+    <Content Include="TensorBoard\cnn\test\events.out.tfevents.1525692342.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525680385.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525681361.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525681425.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525682081.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525682229.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525682328.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525682459.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525682544.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525682648.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525683616.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525686635.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525687402.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525687470.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525687555.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525690689.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525690829.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525691586.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525692005.HEYUBO" />
+    <Content Include="TensorBoard\cnn\train\events.out.tfevents.1525692332.HEYUBO" />
+    <Content Include="TensorBoard\rnn\test\events.out.tfevents.1525680923.HEYUBO" />
+    <Content Include="TensorBoard\rnn\test\events.out.tfevents.1525692903.HEYUBO" />
+    <Content Include="TensorBoard\rnn\train\events.out.tfevents.1525680909.HEYUBO" />
+    <Content Include="TensorBoard\rnn\train\events.out.tfevents.1525692887.HEYUBO" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />

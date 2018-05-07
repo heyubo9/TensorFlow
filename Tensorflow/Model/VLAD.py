@@ -70,7 +70,6 @@ class NetVLAD(object):
             input_reshape = tf.reshape(input, shape = [-1, (input.get_shape().as_list()[1] * input.get_shape().as_list()[2]), channel_in], name = 'reshape')
             input_norm = tf.nn.l2_normalize(input_reshape, axis = 1)
             descriptor = tf.expand_dims(input_norm, axis = -1, name = 'expand_dim')
-            print(descriptor.get_shape())
             conv_vlad = tf.nn.convolution(descriptor, weight, padding = 'VALID')
             bias = tf.nn.bias_add(conv_vlad, bias)
             a_k = tf.nn.softmax(tf.squeeze(bias, axis = 2), axis = -1, name = 'vlad_softmax')
@@ -78,7 +77,6 @@ class NetVLAD(object):
             V1 = tf.matmul(input_reshape, a_k, transpose_a = True)
             V2 = tf.multiply(tf.reduce_sum(a_k, axis = 1, keepdims = True), center)
             V = tf.subtract(V1, V2)
-            print(V.get_shape())
             norm = tf.nn.l2_normalize(tf.reshape(tf.nn.l2_normalize(V, axis = 1), shape = [-1, channel_in * self._cluser_num]), axis = 1, name = 'output')
             
         return norm
