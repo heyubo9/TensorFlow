@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{faba517b-d395-4d48-9d68-82ba2b42aa4a}</ProjectGuid>
     <ProjectHome />
-    <StartupFile />
+    <StartupFile>Tensorflow\main.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -40,6 +40,10 @@
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="{a2bea184-8f13-465d-a6ff-56d4853c07e8}\3.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="main.conf" />
+    <Content Include="Tensorflow\main.conf" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
