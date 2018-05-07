@@ -3,6 +3,7 @@ import numpy as np
 
 class LSTM(object):
     def __init__(self, class_num, embedding_size, hidden_neural_size, num_step, dropout = 0.9, is_training = True):
+
         self._dropout = dropout
         self.batch_size = tf.Variable(0, dtype=tf.int32, trainable=False)
     
