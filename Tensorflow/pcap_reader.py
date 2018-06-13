@@ -28,10 +28,11 @@ class pcap2img:
     """
     _store_name = ""
     _image_raw = ""
-    def __init__(self, index):
+    def __init__(self, index, delay):
         """initilize the class
         
-        last version: 2018/3/14
+        create: 2018/3/14
+        last version: 2018/5/8
         first use thr application layer data to input to the neural network
         maybe change later to fix the accuration
         TODO:
@@ -39,24 +40,27 @@ class pcap2img:
 
         @param index: the index flow to transfer
         @param store_name: the store filename
+        @param delay: 
         """
         #initilize the image size
         self._image_weight = int(global_var.get_value('image_weight'))
         self._image_height = int(global_var.get_value('image_height'))
         size = self._image_weight * self._image_height
-
+        
         #initilize the variable
         starttime = 0
-        endtime = 0
         payload = b""
         result = b""
         length = 0
         self._index = index
+        delay_start = 0
         try:
             #initilize the variable
             filepath = global_var.get_value("filepath")
-            self._img_fold_root = filepath + "dataset\\image\\"
+            self._img_fold_root = filepath + "dataset\\image\\flow-" + str(index)
+            
             pcapreader = PcapReader(filepath + "flow\\flow-" + str(index) + ".pcap")
+            i = 0
             while True:
                 packet = pcapreader.read_packet()
                 if packet is None or length > 65535:
@@ -65,26 +69,48 @@ class pcap2img:
                 src = socket.inet_aton(packet['IP'].src)
                 dst = socket.inet_aton(packet['IP'].dst)
                 proto = pack('h',packet['IP'].proto)
-                sport = pack('i', socket.htons(packet['IP'].payload.fields['sport']))
-                dport = pack('i', socket.htons(packet['IP'].payload.fields['dport']))
-                length += len(packet)
-                #get the application layer
-                if len(packet['IP'].payload.payload) != 0 and len(payload) < 784:
-                    payload += packet['IP'].payload.payload.original
+                sport = packet['IP'].payload.fields['sport']
+                dport = packet['IP'].payload.fields['dport']
+                
+                ###TODO
+                #skip the save image method
+                if sport != 80 and dport != 80:
+                    break
+                if i > 1000:
+                    break
+                
+                #create folder
+                if not os.path.exists(self._img_fold_root):
+                    os.makedirs(self._img_fold_root)
 
+                #initialize
                 if starttime == 0:
                     starttime = packet.time
-                endtime = packet.time
+                    delay_start = packet.time
 
-            duration = pack('f', endtime - starttime)
-            length = pack('i', length)
-            #five tuple plus session length plus start time plus duration plus all layer payload
-            result = (proto + src + dst + sport + dport + length + duration + pack('f',starttime) + payload)[0 : size]
+                if packet.time - delay_start > delay:
+                    #save the delay second picture
+                    length = pack('i', length)
+                    #five tuple plus session length plus start time plus duration plus all layer payload
+                    #result = (proto + src + dst + sport + dport + length + pack('f',starttime) + payload)[0 : size]
+                    result = (length + pack('f',starttime) + payload)[0 : size]
     
-            #padding the zero byte
-            if len(result) < size:
-                result = result + bytes(size - len(result))
-            self._image_raw = result
+                    #padding the zero byte
+                    if len(result) < size:
+                        result = result + bytes(size - len(result))
+                    self._image_raw = result
+                    self.save_img(i)
+                    #re-record
+                    delay_start = packet.time
+                    length = 0
+                    payload = b""
+                    i += 1
+                length += len(packet)
+
+                #get the application layer
+                if len(packet['IP'].payload.payload) != 0 and len(payload) < size:
+                    payload += packet['IP'].payload.payload.original
+
         except Scapy_Exception as e:
             print(e)
 
@@ -107,11 +133,17 @@ class pcap2img:
     def set_size(self,size):
         self._size = size
 
-    def save_img(self):
+    def save_img(self, i):
         """save the bytes array to the .png file
-        last version: 2018/3/20
+        create: 2018/3/20
+        last version: 2018/5/8
+
+        picture file architecture
+        dataset\image
+        |--flow-index(folder)
+           |-------------------delta-i-image.png(file)
         """
-        self.set_store_name(self.get_file_root() + "flow-" + str(self._index) + "-image.png")
+        self.set_store_name(self.get_file_root() + "//delta-" + str(i) + "-image.png")
         #write file
         image = Image.frombytes('L', (self._image_weight, self._image_height), self.get_image_raw())
         image.save(self._store_name)

@@ -59,31 +59,31 @@ def initialize():
     global_var.set_value('database', cf.get('mysql','database'))
     global_var.set_value('classnum', cf.get('network','class_num'))
     global_var.set_value('log_dir', cf.get('network','log_dir'))
+    global_var.set_value('delta', cf.get('network','delta'))
 
 def preprocess():
     """pre-process the pcap file and transfer to the image and label file"""
     #split flow
-    pcapreader = pcap_reader.pcap_reader()
-    pcapreader.flow_split()
-    for i in range(pcapreader.get_count()):
-        pcapreader.flow_statistic(i)
-    del pcapreader
+    #pcapreader = pcap_reader.pcap_reader()
+    #pcapreader.flow_split()
+    #for i in range(pcapreader.get_count()):
+    #    pcapreader.flow_statistic(i)
+    #del pcapreader
 
     #traverse the file in the file root ".\dataset\image":
     root = global_var.get_value('filepath') + "flow"
     i = 0
     for fn in os.listdir(root):
-        image = pcap_reader.pcap2img(i)
-        image.save_img()
+        image = pcap_reader.pcap2img(i, int(global_var.get_value('delta')))
         i += 1
 
-    #transfer the file to the label
-    label = pcap_reader.netflow2label()
-    label.write_file()
+    ##transfer the file to the label
+    #label = pcap_reader.netflow2label()
+    #label.write_file()
 
 def main():
     initialize()
-    #preprocess()
+    preprocess()
     #rename()
 
     #Neural Network
@@ -94,11 +94,11 @@ def main():
     #exam = mnist.MNSIT_Train(784,10)
     #exam.set_log_dir('./TensorBoard')
     #exam.train()
-    exam = nn(28*28, int(global_var.get_value('classnum')),cluster_num = 128, hidden_neural_size = 128, num_step = 1, step = 5000, learning_rate = 0.002, batch_size = 100)
-    exam.set_log_dir(log_dir + '/cnn')
-    exam.train_cnn()
-    exam.set_log_dir(log_dir + '/rnn')
-    exam.train_rnn()
+    #exam = nn(28*28, int(global_var.get_value('classnum')),cluster_num = 128, hidden_neural_size = 128, num_step = 1, step = 5000, learning_rate = 0.002, batch_size = 100)
+    #exam.set_log_dir(log_dir + '/cnn')
+    #exam.train_cnn()
+    #exam.set_log_dir(log_dir + '/rnn')
+    #exam.train_rnn()
 
     #input the train dataset
     pass

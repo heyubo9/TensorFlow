@@ -157,3 +157,6 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             train_writer.add_summary(summary, i + 1)
             if i % 100 == 99:
                 print('round {} accuarcy: {:.6f}'.format(i + 1, accuarcy))
+
+            test_accu = self.__sess.run(accuarcy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
+            print('validation : {:.6f}'.format(test_accu))

@@ -76,7 +76,7 @@ class DataSet(object):
     def epochs_completed(self):
         return self._epochs_completed
 
-    def next_batch(self, batch_size, shuffle=True):
+    def next_batch(self, batch_size, shuffle = True):
         """Return the next `batch_size` examples from this data set."""
         start = self._index_in_epoch
         # Shuffle for the first epoch
