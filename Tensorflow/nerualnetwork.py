@@ -152,11 +152,11 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         for i in range(self._step):
             batch_xs, batch_ys = self.flow.train.next_batch(self._batch_size)
             self.__sess.run(train_step, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
-            accuarcy = self.__sess.run(accuracy, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
-            summary = self.__sess.run(merge, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : 1})
+            accu = self.__sess.run(accuracy, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : 1})
+            summary = self.__sess.run(merge, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
             train_writer.add_summary(summary, i + 1)
             if i % 100 == 99:
-                print('round {} accuarcy: {:.6f}'.format(i + 1, accuarcy))
+                print('round {} accuarcy: {:.6f}'.format(i + 1, accu))
 
-            test_accu = self.__sess.run(accuarcy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
-            print('validation : {:.6f}'.format(test_accu))
+        test_accu = self.__sess.run(accuarcy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
+        print('validation : {:.6f}'.format(test_accu))
