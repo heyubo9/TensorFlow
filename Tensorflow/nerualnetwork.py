@@ -9,7 +9,7 @@ import tensorflow.examples.tutorials.mnist.input_data as input_data
 import math
 
 class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
-    def __init__(self, input_size, output_size, cluster_num, hidden_neural_size, num_step, cnn_learning_rate = 0.001, rnn_learning_rate = 0.01, step = 1000, batch_size = 100, dropout = 0.9, is_training = True):
+    def __init__(self, input_size, output_size, cluster_num, hidden_neural_size, num_step, cnn_learning_rate = 0.001, rnn_learning_rate = 0.01, cnn_step = 1000, rnn_step = 5000, batch_size = 100, dropout = 0.9, is_training = True):
         """construction function
         @param input_size the size of input
         @param output_size the size of output
@@ -23,7 +23,8 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         self._output_size = output_size
         self._cnn_learning_rate = cnn_learning_rate
         self._rnn_learning_rate = rnn_learning_rate
-        self._step = step
+        self._cnn_step = cnn_step
+        self._rnn_step = rnn_step
         self._batch_size = batch_size
 
         CNN.CNN.__init__(self, dropout)
@@ -82,7 +83,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             train_writer = tf.summary.FileWriter(self._log_dir + '/train', self.__sess.graph)
             #test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
 
-        for i in range(self._step):
+        for i in range(self._cnn_step):
             batch_xs, batch_ys = self.flow.train.next_batch(self._batch_size)
             self.__sess.run(train_step, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self._keep_prob : self._dropout})
             accuarcy = self.__sess.run(accuracy, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self._keep_prob : self._dropout})
@@ -112,7 +113,8 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         input = tf.split(input, self.num_step)
             
         with tf.name_scope('rnn_model'):
-            lstm_output = self._add_lstm_layer(input)
+            linear_output = self._add_lstm_layer(input)
+            lstm_output = tf.nn.softsign(linear_output)
             #double input feature number
             output = self._add_liner_layer(lstm_output, 2 * self.hidden_neural_size, self.class_num)
         with tf.name_scope('rnn_loss'):
@@ -151,7 +153,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             train_writer = tf.summary.FileWriter(self._log_dir + '/train',self.__sess.graph)
             #test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
 
-        for i in range(self._step):
+        for i in range(self._rnn_step):
             batch_xs, batch_ys = self.flow.train.next_batch(self._batch_size)
             self.__sess.run(train_step, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
             accu = self.__sess.run(accuracy, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : 1})
