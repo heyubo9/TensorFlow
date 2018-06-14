@@ -121,7 +121,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = output, labels =  self._accurate_data))
             loss_scalar = tf.summary.scalar('cross_entropy', loss)
         with tf.name_scope('rnn_optimizer'):
-            optimizer = tf.train.AdamOptimizer(learning_rate = self._rnn_learning_rate).minimize(loss)
+            optimizer = tf.train.AdagradOptimizer(learning_rate = self._rnn_learning_rate).minimize(loss)
         with tf.name_scope('rnn_accuarcy'):
             correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(self._accurate_data, 1))
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
