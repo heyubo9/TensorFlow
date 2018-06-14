@@ -148,7 +148,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
             #merge the rnn summary and write it to the tensorboard
             merge = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES, scope))
-            train_writer = tf.summary.FileWriter(self._log_dir + '/train/log',self.__sess.graph)
+            train_writer = tf.summary.FileWriter(self._log_dir + '/train',self.__sess.graph)
             #test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
 
         for i in range(self._step):
