@@ -9,7 +9,7 @@ import tensorflow.examples.tutorials.mnist.input_data as input_data
 import math
 
 class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
-    def __init__(self, input_size, output_size, cluster_num, hidden_neural_size, num_step, learning_rate = 0.001, step = 1000, batch_size = 100, dropout = 0.9, is_training = True):
+    def __init__(self, input_size, output_size, cluster_num, hidden_neural_size, num_step, cnn_learning_rate = 0.001, rnn_learning_rate = 0.01, step = 1000, batch_size = 100, dropout = 0.9, is_training = True):
         """construction function
         @param input_size the size of input
         @param output_size the size of output
@@ -21,8 +21,12 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         """
         self._input_size = input_size
         self._output_size = output_size
+        self._cnn_learning_rate = cnn_learning_rate
+        self._rnn_learning_rate = rnn_learning_rate
+        self._step = step
+        self._batch_size = batch_size
 
-        CNN.CNN.__init__(self, learning_rate, step, batch_size, dropout)
+        CNN.CNN.__init__(self, dropout)
         VLAD.NetVLAD.__init__(self, cluster_num)
         LSTM.LSTM.__init__(self, output_size, 64 * cluster_num, hidden_neural_size, num_step, dropout, is_training)
         
@@ -48,8 +52,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             cross_entropy = tf.reduce_sum(tf.nn.softmax_cross_entropy_with_logits_v2(logits = predict, labels = self._accurate_data))
             loss_scalar = tf.summary.scalar('cross_entropy', cross_entropy)
         with tf.name_scope('cnn_optimizer'):
-            #train_step = tf.train.GradientDescentOptimizer(self._learning_rate).minimize(cross_entropy)
-            train_step = tf.train.AdamOptimizer(self._learning_rate).minimize(cross_entropy)
+            train_step = tf.train.AdamOptimizer(self._cnn_learning_rate).minimize(cross_entropy)
         with tf.name_scope('cnn_accuarcy'):
             correct_prediction = tf.equal(tf.argmax(predict, 1), tf.argmax(self._accurate_data, 1))
             accuracy = tf.reduce_mean(tf.cast(correct_prediction,tf.float32))
@@ -76,7 +79,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
             #merge the summary and write it to the tensorboard
             merge = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES, scope))
-            train_writer = tf.summary.FileWriter(self._log_dir + '/train/log', self.__sess.graph)
+            train_writer = tf.summary.FileWriter(self._log_dir + '/train', self.__sess.graph)
             #test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
 
         for i in range(self._step):
@@ -89,7 +92,6 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
                 print('round {} accuarcy: {:.6f}'.format(i + 1, accuarcy))
 
         self.__saver.save(self.__sess, './saver/model')
-        #self.__sess.close()
 
     def __model_rnn(self, input):
         ###TODO
@@ -117,7 +119,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = output, labels =  self._accurate_data))
             loss_scalar = tf.summary.scalar('cross_entropy', loss)
         with tf.name_scope('rnn_optimizer'):
-            optimizer = tf.train.AdamOptimizer(learning_rate = self._learning_rate).minimize(loss)
+            optimizer = tf.train.AdamOptimizer(learning_rate = self._rnn_learning_rate).minimize(loss)
         with tf.name_scope('rnn_accuarcy'):
             correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(self._accurate_data, 1))
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -158,5 +160,8 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             if i % 100 == 99:
                 print('round {} accuarcy: {:.6f}'.format(i + 1, accu))
 
-        test_accu = self.__sess.run(accuarcy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
+        test_accu = self.__sess.run(accuracy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
         print('validation : {:.6f}'.format(test_accu))
+
+    def close_sess(self):
+        self.__sess.close()

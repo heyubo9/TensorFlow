@@ -83,7 +83,7 @@ def preprocess():
 
 def main():
     initialize()
-    preprocess()
+    #preprocess()
     #rename()
 
     #Neural Network
@@ -91,15 +91,15 @@ def main():
     #if tf.gfile.Exists(log_dir):
     #    tf.gfile.DeleteRecursively(log_dir)
     #tf.gfile.MakeDirs(log_dir)
-    #exam = mnist.MNSIT_Train(784,10)
-    #exam.set_log_dir('./TensorBoard')
-    #exam.train()
-    #exam = nn(28*28, int(global_var.get_value('classnum')),cluster_num = 128, hidden_neural_size = 128, num_step = 1, step = 5000, learning_rate = 0.002, batch_size = 100)
-    #exam.set_log_dir(log_dir + '/cnn')
-    #exam.train_cnn()
-    #exam.set_log_dir(log_dir + '/rnn')
-    #exam.train_rnn()
-
+    exam = mnist.MNSIT_Train(784,10)
+    exam.set_log_dir('./TensorBoard')
+    exam.train()
+    exam = nn(28*28, int(global_var.get_value('classnum')),cluster_num = 128, hidden_neural_size = 128, num_step = 1, step = 5000, cnn_learning_rate = 0.002, rnn_learning_rate = 0.01, batch_size = 100)
+    exam.set_log_dir(log_dir + '/cnn')
+    exam.train_cnn()
+    exam.set_log_dir(log_dir + '/rnn')
+    exam.train_rnn()
+    exam.close_sess()
     #input the train dataset
     pass
 
