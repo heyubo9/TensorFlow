@@ -198,4 +198,16 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             ax[i].imshow(conv[i][0], cmap = plt.cm.gray)
         plt.title('conv')
         plt.show()
+
+        #visualize the first pooling feature
+        graph = tf.get_default_graph()
+        self._x = graph.get_tensor_by_name('input/input:0')
+        feature = graph.get_tensor_by_name('cnn/cnn_model/pool_1/pool:0')
+        conv_output = self.__sess.run(feature, feed_dict = {self._x : input})
+        conv = self.__sess.run(tf.transpose(conv_output, [3, 0, 1, 2]))
+        fig, ax = plt.subplots(ncols = 16, figsize = (16, 1))
+        for i in range(16):
+            ax[i].imshow(conv[i][0], cmap = plt.cm.gray)
+        plt.title('pool')
+        plt.show()
         pass
