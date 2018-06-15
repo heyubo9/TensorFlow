@@ -187,7 +187,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
         #visualize the first convolution feature 
         graph = tf.get_default_graph()
-        self._x = graph.get_tensor_by_name('input/input：0')
+        self._x = graph.get_tensor_by_name('input/input:0')
         feature = graph.get_tensor_by_name('cnn/cnn_model/conv_1/conv_1:0')
         conv_output = self.__sess.run(feature, feed_dict = {self._x : input})
         conv = self.__sess.run(tf.transpose(conv_output, [3, 0, 1, 2]))
