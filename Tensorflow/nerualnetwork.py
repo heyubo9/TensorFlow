@@ -6,6 +6,9 @@ from Model import LSTM
 import tensorflow as tf
 import tensorflow.examples.tutorials.mnist.input_data as input_data
 #import input_data
+
+import matplotlib.pyplot as plt
+import numpy as np
 import math
 
 class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
@@ -167,3 +170,27 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
     def close_sess(self):
         self.__sess.close()
+
+    def feature_visualization(self, input_feature_num):
+        """visualize the CNN feature extraction
+        @param input : the input image 
+        """
+        print('feature visualization')
+        input = self.flow.train.images[input_feature_num]
+        #visualize input image
+        fig, ax = plt.subplots(figsize = (2, 2))
+        ax.imshow(np.reshape(input, (28,28)))
+        plt.show()
+
+        #visualize the first convolution feature 
+        graph = tf.get_default_graph()
+        self._x = graph.get_tensor_by_name('input/input：0')
+        feature = graph.get_tensor_by_name('cnn/cnn_model/conv_1/conv_1:0')
+        conv_output = self.__sess.run(feature, feed_dict = {self._x : input})
+        conv = self.__sess.run(tf.transpose(conv_output, [3, 0, 1, 2]))
+        fig, ax = plt.subplots(ncols = 16, figsize = (16, 1))
+        for i in range(16):
+            ax[i].imshow(conv[i][0])
+        plt.title('conv')
+        plt.show()
+        pass

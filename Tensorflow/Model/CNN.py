@@ -91,7 +91,7 @@ class CNN():
         """
         string = 'pool_' + str(layer_index)
         with tf.variable_scope(string) as scope:
-            pool = tf.nn.max_pool(input, ksize, stride, padding = padding)
+            pool = tf.nn.max_pool(input, ksize, stride, padding = padding,name = 'pool')
             #norm = tf.nn.lrn(pool,depth_radius = 4,bias = 1.0, alpha = self.__learning_rate, beta = 0.75,name = 'normal')
         
         return pool

@@ -17,6 +17,7 @@ import pcap_reader
 import input_data
 import configparser
 import global_var
+
 import os
 import shutil
 
@@ -97,8 +98,9 @@ def main():
     exam = nn(28*28, int(global_var.get_value('classnum')),cluster_num = 16, hidden_neural_size = 128, num_step = 1, cnn_step = 5000, rnn_step = 20000, cnn_learning_rate = 0.002, rnn_learning_rate = 0.01, batch_size = 100)
     exam.set_log_dir(log_dir + '/cnn')
     exam.train_cnn()
-    exam.set_log_dir(log_dir + '/rnn')
-    exam.train_rnn()
+    exam.feature_visualization(14)
+    #exam.set_log_dir(log_dir + '/rnn')
+    #exam.train_rnn()
     exam.close_sess()
     #input the train dataset
     pass
