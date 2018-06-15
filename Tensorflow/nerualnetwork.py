@@ -179,7 +179,9 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         @param input : the input image 
         """
         print('feature visualization')
-        input = self.flow.train.images[input_feature_num]
+        start = input_feature_num
+        end = input_feature_num + 1
+        input = self.flow.train.images[start : end]
         #visualize input image
         fig, ax = plt.subplots(figsize = (2, 2))
         ax.imshow(np.reshape(input, (28,28)))
