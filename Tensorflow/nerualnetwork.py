@@ -96,8 +96,8 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
                 print('round {} accuarcy: {:.6f}'.format(i + 1, accuarcy))
 
         
-        test_accu = self.__sess.run(accuracy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
-        print('validation : {:.6f}'.format(test_accu))
+        #test_accu = self.__sess.run(accuracy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
+        #print('validation : {:.6f}'.format(test_accu))
         self.__saver.save(self.__sess, './saver/model')
 
     def __model_rnn(self, input):
