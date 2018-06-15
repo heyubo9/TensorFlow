@@ -184,7 +184,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         input = self.flow.train.images[start : end]
         #visualize input image
         fig, ax = plt.subplots(figsize = (2, 2))
-        ax.imshow(np.reshape(input, (28,28)))
+        ax.imshow(np.reshape(input, (28,28)), cmap = plt.cm.gray)
         plt.show()
 
         #visualize the first convolution feature 
@@ -195,7 +195,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         conv = self.__sess.run(tf.transpose(conv_output, [3, 0, 1, 2]))
         fig, ax = plt.subplots(ncols = 16, figsize = (16, 1))
         for i in range(16):
-            ax[i].imshow(conv[i][0])
+            ax[i].imshow(conv[i][0], cmap = plt.cm.gray)
         plt.title('conv')
         plt.show()
         pass
