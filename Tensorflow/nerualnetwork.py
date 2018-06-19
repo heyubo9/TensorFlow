@@ -249,7 +249,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         end = image_index + 1
         image = self.flow.train.images[start : end]
         input = graph.get_tensor_by_name('input/input:0')
-        output = graph.get_tensor_by_name('cnn/cnn_model/pool_' + self._vis_layer_num + '/pool:0')
+        output = graph.get_tensor_by_name('cnn/cnn_model/pool_{}/pool:0'.format(self._vis_layer_num))
 
         ###TODO
         #add selection to select the maximum activation feature to visualization the response convolution filter
