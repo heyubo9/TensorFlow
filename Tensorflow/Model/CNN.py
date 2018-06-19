@@ -72,7 +72,7 @@ class CNN():
             sconv = tf.nn.bias_add(conv, bias)
             conv = tf.nn.relu(conv, name = scope.name)
 
-            if self._vis_layer_num == layer_index and self._cnn_visualization == True:
+            if self._vis_layer_num >= layer_index and self._cnn_visualization == True:
                 self.store_param.append(weight)
                 self.store_param.append(bias)
         return conv
@@ -148,7 +148,7 @@ class CNN():
 
         return result
 
-    def _add_unpool_layer(input, ind, ksize=(1, 2, 2, 1), scope='unpool'):
+    def _add_unpool_layer(self, input, ind, ksize=(1, 2, 2, 1), scope='unpool'):
         """Adds a 2D unpooling op.
         https://arxiv.org/abs/1505.04366
         Unpooling layer after max_pool_with_argmax.
@@ -183,5 +183,6 @@ class CNN():
             return ret
 
     def _add_deconv_layer(self, input, filter, output_shape, stride):
+        input = tf.nn.relu(input)
         result = tf.nn.conv2d_transpose(input, filter, output_shape, stride)
         return result

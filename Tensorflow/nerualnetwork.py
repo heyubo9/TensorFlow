@@ -157,7 +157,8 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             if i % 100 == 99:
                 print('round {} accuarcy: {:.6f}'.format(i + 1, accuarcy))
 
-        #store parameter is [weight, bias, max_index]
+        #store_param is [weight, bias, max_index]
+        #weight's shape: [conv_x,conv_y,input_feature_num,output_feature_num]
         if self._cnn_visualization == True:
             pass
 
@@ -239,12 +240,33 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         plt.show()
         pass
 
-    def deconvolution(self, input):
+    def deconvolution(self, image_index):
         """deconvolution network to extract the visualize feature
         """
         #model
         graph = tf.get_default_graph()
-        self._x = graph.get_tensor_by_name('input/input:0')
-        feature = graph.get_tensor_by_name('cnn/cnn_model/pool_' + self._vis_layer_num + '/pool:0')
+        start = image_index
+        end = image_index + 1
+        image = self.flow.train.images[start : end]
+        input = graph.get_tensor_by_name('input/input:0')
+        output = graph.get_tensor_by_name('cnn/cnn_model/pool_' + self._vis_layer_num + '/pool:0')
 
+        ###TODO
+        #add selection to select the maximum activation feature to visualization the response convolution filter
+        image_feature = self.__sess.run(output, feed_dict = {input : image})
+
+        while self._vis_layer_num > 0:
+            max_index = self.store_param.pop()
+            bias = self.store_param.pop()
+            weight = self.store_param.pop()
+            index = self.__sess.run(max_index, feed_dict = {input : input})
+            unpool = self._add_unpool_layer(output, index)
+            output = self._add_deconv_layer(unpool, weight, weight.get_shape()[2], stride = [1, 1, 1, 1])
+            self._vis_layer_num -= 1
+
+        #feature visualization
+        output = self.__sess.run(feature, feed_dict = {output:image_feature})
+        fig, ax = plt.subplots(figsize = (2, 2))
+        ax.imshow(np.reshape(output, (28,28)), cmap = plt.cm.gray)
+        plt.show()
         pass
