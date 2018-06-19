@@ -1,5 +1,4 @@
 import tensorflow as tf
-import numpy as np
 
 class LSTM(object):
     def __init__(self, class_num, embedding_size, hidden_neural_size, num_step, dropout = 0.9, is_training = True):
