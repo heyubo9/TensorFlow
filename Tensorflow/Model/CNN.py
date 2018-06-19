@@ -11,13 +11,15 @@ import tensorflow as tf
 #from tensorboard.plugins import projector
 
 class CNN():
+    store_param = []
+
     def __init__(self, dropout = 0.9, visualization = False):
         """initialize the cnn class
 
         @param dropout : the dropout ratio in the fully_connect layer, if 1 ,do not use dropout
         """
         self._dropout = dropout
-        self.store_param = []
+        self._cnn_visualization = visualization
 
     def __weight_init(self, shape, mean, stddev):
         init = tf.truncated_normal(shape, mean, stddev)
@@ -180,6 +182,6 @@ class CNN():
             ret.set_shape(set_output_shape)
             return ret
 
-    def _add_conv_layer(self, input, filter, output_shape, stride):
+    def _add_deconv_layer(self, input, filter, output_shape, stride):
         result = tf.nn.conv2d_transpose(input, filter, output_shape, stride)
         return result

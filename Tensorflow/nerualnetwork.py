@@ -73,7 +73,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             if self._vis_layer_num == 1:
                 self.store_param.append(max_index)
             conv2 = self._add_conv_layer(norm1,2,5,5,[1,1,1,1],32,64,stddev = 0.1)
-            norm2, max_index2 = self._add_pool(conv2, 2, [1,2,2,1], [1,2,2,1])
+            norm2, max_index = self._add_pool(conv2, 2, [1,2,2,1], [1,2,2,1])
             if self._vis_layer_num == 2:
                 self.store_param.append(max_index)
             vald_output = self._add_vald_layer(norm2, 64, 'vald')
@@ -157,7 +157,10 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             if i % 100 == 99:
                 print('round {} accuarcy: {:.6f}'.format(i + 1, accuarcy))
 
-        
+        #store parameter is [weight, bias, max_index]
+        if self._cnn_visualization == True:
+            pass
+
         test_accu = self.__sess.run(accuracy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self._keep_prob : 1})
         print('validation : {:.6f}'.format(test_accu))
         self.__saver.save(self.__sess, './saver/model')
