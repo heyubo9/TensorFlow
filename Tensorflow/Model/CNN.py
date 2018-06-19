@@ -73,6 +73,7 @@ class CNN():
             conv = tf.nn.relu(conv, name = scope.name)
 
             if self._vis_layer_num >= layer_index and self._cnn_visualization == True:
+                self.store_param.append(input.get_shape().as_list())
                 self.store_param.append(weight)
                 self.store_param.append(bias)
         return conv

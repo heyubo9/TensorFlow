@@ -123,7 +123,6 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(self._accurate_data, 1))
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
             accu_scalar = tf.summary.scalar('accuracy', accuracy)
-
         return optimizer, accuracy
 
     def train_cnn(self):
@@ -157,7 +156,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             if i % 100 == 99:
                 print('round {} accuarcy: {:.6f}'.format(i + 1, accuarcy))
 
-        #store_param is [weight, bias, max_index]
+        #store_param is [output_shape, weight, bias, max_index]
         #weight's shape: [conv_x,conv_y,input_feature_num,output_feature_num]
         if self._cnn_visualization == True:
             pass
@@ -256,12 +255,14 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         image_feature = self.__sess.run(output, feed_dict = {input : image})
 
         while self._vis_layer_num > 0:
+            output_shape = self.store_param.pop()
             max_index = self.store_param.pop()
             bias = self.store_param.pop()
             weight = self.store_param.pop()
-            index = self.__sess.run(max_index, feed_dict = {input : input})
+            index = self.__sess.run(max_index, feed_dict = {input : image})
             unpool = self._add_unpool_layer(output, index)
-            output = self._add_deconv_layer(unpool, weight, weight.get_shape()[2], stride = [1, 1, 1, 1])
+            unbias = tf.subtract(unpool, bias)
+            output = self._add_deconv_layer(unpool, weight, output_shape, stride = [1, 1, 1, 1])
             self._vis_layer_num -= 1
 
         #feature visualization
