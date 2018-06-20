@@ -178,7 +178,7 @@ class CNN():
             ret = tf.scatter_nd(ind_, pool_, shape=tf.cast(flat_output_shape, tf.int64))
             ret = tf.reshape(ret, output_shape)
 
-            set_input_shape = pool.get_shape()
+            set_input_shape = input.get_shape()
             set_output_shape = [set_input_shape[0], set_input_shape[1] * stride[1], set_input_shape[2] * stride[2], set_input_shape[3]]
             ret.set_shape(set_output_shape)
             return ret
