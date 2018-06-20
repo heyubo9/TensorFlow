@@ -264,10 +264,9 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         image = self.flow.train.images[start : end]
         input = graph.get_tensor_by_name('input/input:0')
         output = graph.get_tensor_by_name('cnn/cnn_model/pool_{}/pool:0'.format(self._vis_layer_num))
-
         ###TODO
         #add selection to select the maximum activation feature to visualization the response convolution filter
-        image_feature = self.__sess.run(output, feed_dict = {input : image})
+        #image_feature = self.__sess.run(output, feed_dict = {input : image})
 
         while self._vis_layer_num > 0:
             max_index = self.store_param.pop()
@@ -281,7 +280,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             self._vis_layer_num -= 1
 
         #feature visualization
-        output = self.__sess.run(feature, feed_dict = {output:image_feature})
+        output = self.__sess.run(output, feed_dict = {input : image})
         fig, ax = plt.subplots(figsize = (2, 2))
         ax.imshow(np.reshape(output, (28,28)), cmap = plt.cm.gray)
         plt.show()
