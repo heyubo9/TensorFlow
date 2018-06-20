@@ -149,7 +149,7 @@ class CNN():
 
         return result
 
-    def _add_unpool_layer(self, input, ind, ksize=(1, 2, 2, 1), scope='unpool'):
+    def _add_unpool_layer(self, input, ind, stride = (1, 2, 2, 1), scope='unpool'):
         """Adds a 2D unpooling op.
         https://arxiv.org/abs/1505.04366
         Unpooling layer after max_pool_with_argmax.
