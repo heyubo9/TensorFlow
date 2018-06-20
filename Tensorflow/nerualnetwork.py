@@ -262,6 +262,11 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         start = image_index
         end = image_index + 1
         image = self.flow.train.images[start : end]
+        #visualize input image
+        fig, ax = plt.subplots(figsize = (2, 2))
+        ax.imshow(np.reshape(input, (28,28)), cmap = plt.cm.gray)
+        plt.show()
+
         input = graph.get_tensor_by_name('input/input:0')
         output = graph.get_tensor_by_name('cnn/cnn_model/pool_{}/pool:0'.format(self._vis_layer_num))
         ###TODO
