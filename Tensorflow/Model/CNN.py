@@ -167,7 +167,7 @@ class CNN():
             flat_input_size = tf.reduce_prod(input_shape)
             flat_output_shape = [output_shape[0], output_shape[1] * output_shape[2] * output_shape[3]]
 
-            pool_ = tf.reshape(pool, [flat_input_size])
+            pool_ = tf.reshape(input, [flat_input_size])
             batch_range = tf.reshape(tf.range(tf.cast(output_shape[0], tf.int64), dtype=ind.dtype), 
                                                 shape=[input_shape[0], 1, 1, 1])
             b = tf.ones_like(ind) * batch_range
