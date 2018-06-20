@@ -270,10 +270,10 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         image_feature = self.__sess.run(output, feed_dict = {input : image})
 
         while self._vis_layer_num > 0:
-            output_shape = self.store_param.pop()
             max_index = self.store_param.pop()
             bias = self.store_param.pop()
             weight = self.store_param.pop()
+            output_shape = self.store_param.pop()
             index = self.__sess.run(max_index, feed_dict = {input : image})
             unpool = self._add_unpool_layer(output, index)
             unbias = tf.subtract(unpool, bias)
