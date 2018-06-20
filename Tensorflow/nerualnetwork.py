@@ -264,7 +264,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         image = self.flow.train.images[start : end]
         #visualize input image
         fig, ax = plt.subplots(figsize = (2, 2))
-        ax.imshow(np.reshape(input, (28,28)), cmap = plt.cm.gray)
+        ax.imshow(np.reshape(image, (28,28)), cmap = plt.cm.gray)
         plt.show()
 
         input = graph.get_tensor_by_name('input/input:0')
