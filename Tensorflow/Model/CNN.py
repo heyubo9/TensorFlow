@@ -161,7 +161,7 @@ class CNN():
             unpool:    unpooling tensor
         """
         with tf.variable_scope(scope):
-            input_shape = tf.shape(pool)
+            input_shape = tf.shape(input)
             output_shape = [input_shape[0], input_shape[1] * stride[1], input_shape[2] * stride[2], input_shape[3]]
 
             flat_input_size = tf.reduce_prod(input_shape)

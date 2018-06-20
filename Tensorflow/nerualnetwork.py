@@ -5,6 +5,7 @@ from Model import LSTM
 
 import tensorflow as tf
 import tensorflow.examples.tutorials.mnist.input_data as input_data
+from tensorflow.python.client import device_lib as _device_lib
 #import input_data
 
 import matplotlib.pyplot as plt
@@ -65,6 +66,17 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
     def close_sess(self):
         self.__sess.close()
+
+    def is_gpu_available(self):
+        """
+        code from https://github.com/tensorflow/tensorflow/blob/master/tensorflow/python/platform/test.py
+        Returns whether TensorFlow can access a GPU.
+        Args:
+        cuda_only: limit the search to CUDA gpus.
+        Returns:
+        True iff a gpu device of the requested kind is available.
+        """
+        return any((x.device_type == 'GPU') for x in _device_lib.list_local_devices())
 
     def __model_cnn(self):
         with tf.name_scope('cnn_model'):
@@ -128,8 +140,11 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
     def train_cnn(self):
         """train the model described above
         """
-        gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
-        self.__sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        if self.is_gpu_available():
+            gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
+            self.__sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        else:
+            self.__sess = tf.Session()
         with tf.name_scope('input'):
             self._x = tf.placeholder(tf.float32,[None,self._input_size],name = 'input')
             edge_len = int(math.sqrt(self._input_size))
