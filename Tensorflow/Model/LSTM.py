@@ -14,6 +14,7 @@ class LSTM(object):
                                                                     
         self.new_batch_size = tf.placeholder(tf.int32,shape = [],name = "batch_size")
         self._batch_size_update = tf.assign(self.batch_size,self.new_batch_size)
+        self._store_param = []
 
     def __variable_summaries(self,var):
         """attach to a Tensor for tensorboard Visualiation

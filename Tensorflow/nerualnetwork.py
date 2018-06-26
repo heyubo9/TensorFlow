@@ -7,13 +7,14 @@ import tensorflow as tf
 import tensorflow.examples.tutorials.mnist.input_data as input_data
 from tensorflow.python.client import device_lib as _device_lib
 #import input_data
+from input_data import read_csv
 
 import matplotlib.pyplot as plt
 import numpy as np
 import math
 
 class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
-    def __init__(self, input_size, output_size, cluster_num, hidden_neural_size, num_step, cnn_learning_rate = 0.001, rnn_learning_rate = 0.01, cnn_step = 1000, rnn_step = 5000, batch_size = 100, dropout = 0.9, is_training = True, visualization_cnn = False):
+    def __init__(self, input_size, output_size, cluster_num, hidden_neural_size, num_step, embedding_size = 0, cnn_learning_rate = 0.001, rnn_learning_rate = 0.01, cnn_step = 1000, rnn_step = 5000, batch_size = 100, dropout = 0.9, is_training = True, visualization_cnn = False):
         """construction function
         Args:
         	input_size the size of input
@@ -31,6 +32,12 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         self._cnn_step = cnn_step
         self._rnn_step = rnn_step
         self._batch_size = batch_size
+        self._cnn_visualization = visualization_cnn
+        self._vis_layer_num = 1
+        if embedding_size == 0:
+            self._embedding_size = 64 * cluster_num
+        else:
+            self._embedding_size = embedding_size
 
         CNN.CNN.__init__(self, dropout)
         VLAD.NetVLAD.__init__(self, cluster_num)
@@ -107,20 +114,20 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         ###TODO
         #add some information to enhance the performance fo the malware flow detection
 
-        #the shape became [batch_size, embedding_size(which is cluster_num * conv_output_feature), 1],
-        input = tf.expand_dims(input, axis = 1, name = 'input')
-        #then the input's shape became [batch_size, embedding_size, num_step(sequence length)]
-        #list = []
-        #for i in range(self.num_step):
-        #    list.append(input_feature)
-        #input = tf.parallel_stack(list)
+        ##the shape became [batch_size, embedding_size(which is cluster_num * conv_output_feature), 1],
+        #input = tf.expand_dims(input, axis = 1, name = 'input')
+        ##then the input's shape became [batch_size, embedding_size, num_step(sequence length)]
+        ##list = []
+        ##for i in range(self.num_step):
+        ##    list.append(input_feature)
+        ##input = tf.parallel_stack(list)
 
-        #reshape the input
-        input = tf.transpose(input, [1, 0, 2])
-        input= tf.reshape(input, [-1, self.embedding_size])
-        print(input.shape)
-        input = tf.split(input, self.num_step)
-            
+        ##reshape the input
+        #input = tf.transpose(input, [1, 0, 2])
+        #input= tf.reshape(input, [-1, self.embedding_size])
+        #print(input.shape)
+        #input = tf.split(input, self.num_step)
+        
         with tf.name_scope('rnn_model'):
             linear_output = self._add_lstm_layer(input)
             lstm_output = tf.nn.softsign(linear_output)
@@ -188,10 +195,21 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         #self.__saver = tf.train.import_meta_graph('./saver/model.meta')
         #self.__saver.restore(self.__sess, tf.train.latest_checkpoint('./saver/'))
 
-        graph = tf.get_default_graph()
-        self._x = graph.get_tensor_by_name('input/input:0')
-        input_feature = graph.get_tensor_by_name('cnn/cnn_model/vald/output:0')
-        input_feature = tf.stop_gradient(input_feature)
+        #graph = tf.get_default_graph()
+        #self._x = graph.get_tensor_by_name('input/input:0')
+        #input_feature = graph.get_tensor_by_name('cnn/cnn_model/vald/output:0')
+        #input_feature = tf.stop_gradient(input_feature)
+        if self.is_gpu_available():
+            gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
+            self.__sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
+        else:
+            self.__sess = tf.Session()
+        with tf.name_scope('input'):
+            input_feature = tf.placeholder(tf.float32,[None, self.num_step, self._input_size],name = 'input')
+
+        feature, label = read_csv(self._batch_size, self.num_step, self._rnn_step)
+        coord = tf.train.Coordinator()
+        threads = tf.train.queue_runner(self.__sess, coord = coord)
 
         with tf.name_scope('rnn') as scope:
             train_step, accuracy= self.__model_rnn(input_feature)
@@ -204,17 +222,28 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             train_writer = tf.summary.FileWriter(self._log_dir + '/train',self.__sess.graph)
             #test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
 
-        for i in range(self._rnn_step):
-            batch_xs, batch_ys = self.flow.train.next_batch(self._batch_size)
-            self.__sess.run(train_step, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
-            accu = self.__sess.run(accuracy, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : 1})
-            summary = self.__sess.run(merge, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
-            train_writer.add_summary(summary, i + 1)
-            if i % 100 == 99:
-                print('round {} accuarcy: {:.6f}'.format(i + 1, accu))
+        try:
+            i = 0;
+            while not coord.should_stop():
+                batch_xs, batch_ys = self.__sess.run([feature, label])
+                batch_xs = batch_xs.reshape([batch_size, self.num_step, self.embedding_size])
+                self.__sess.run(train_step, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
+                accu = self.__sess.run(accuracy, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : 1})
+                summary = self.__sess.run(merge, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
+                train_writer.add_summary(summary, i + 1)
+                if i % 100 == 99:
+                    print('round {} accuarcy: {:.6f}'.format(i + 1, accu))
 
-        test_accu = self.__sess.run(accuracy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
-        print('validation : {:.6f}'.format(test_accu))
+            graph = tf.get_default_graph()
+            weight = graph.get_tensor_by_name('bidirectional_rnn/fw/basic_lstm_cell/kernel:0')
+            w = self.__sess.run(weight)
+            print(w.shape)
+            #test_accu = self.__sess.run(accuracy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
+            #print('validation : {:.6f}'.format(test_accu))
+        except tf.errors.OutOfRangeError:
+            print('Done Training')
+        finally:
+            return
 
     def feature_visualization(self, input_feature_num):
         """visualize the CNN feature extraction
@@ -272,6 +301,9 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         ###TODO
         #add selection to select the maximum activation feature to visualization the response convolution filter
         #image_feature = self.__sess.run(output, feed_dict = {input : image})
+        max = tf.arg_max(output, 1)
+        max = tf.arg_max(max,2)
+        np.insert
 
         while self._vis_layer_num > 0:
             max_index = self.store_param.pop()

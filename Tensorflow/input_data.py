@@ -181,3 +181,20 @@ def read_data_sets(dtype = dtypes.float32, validation_size = 5000, reshape = Tru
     #test = DataSet(test_images, test_labels, **option)
 
     return base.Datasets(train = train, validation = validation, test = None)
+
+def read_csv(session, batch_size, num_epochs):
+    record_defaults = [[1], [1]]
+    folder = []
+    filename = global_var.get_value('filepath') + global_var.get_value('filename')
+    folder.append(filename)
+
+    filename_queue = tf.train.string_input_producer(folder, shuffle = False, num_epochs = num_epochs)
+    reader = tf.TextLineReader(skip_header_lines = 1)
+    key, value = reader.read(filename_queue)
+
+    ##need to be update 
+    textline = tf.decode_csv(value, record_defaults = record_defaults)
+    x, y = tf.train.batch(textline, batch_size = batch_size, capacity = batch_size * 10)
+    init = tf.local_variables_initializer()
+    session.run(init)
+    return x, y

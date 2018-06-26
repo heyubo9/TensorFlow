@@ -17,9 +17,10 @@ import pcap_reader
 import input_data
 import configparser
 import global_var
-
+from input_data import read_csv
 import os
 import shutil
+import
 
 def rename():
     filefold = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']
@@ -58,9 +59,10 @@ def initialize():
     global_var.set_value('username', cf.get('mysql','username'))
     global_var.set_value('passwd', cf.get('mysql','passwd'))
     global_var.set_value('database', cf.get('mysql','database'))
-    global_var.set_value('classnum', cf.get('network','class_num'))
+    global_var.set_value('classnum', cf.get('dataset','class_num'))
     global_var.set_value('log_dir', cf.get('network','log_dir'))
     global_var.set_value('delta', cf.get('network','delta'))
+    global_var.set_value('embedding_size', cf.get('network', 'embedding_size'))
 
 def preprocess():
     """pre-process the pcap file and transfer to the image and label file"""
@@ -82,6 +84,28 @@ def preprocess():
     #label = pcap_reader.netflow2label()
     #label.write_file()
 
+def exam(batch_size, num_step, rnn_step):
+    sess = tf.Session()
+
+    feature, label = read_csv(sess, batch_size, num_step, rnn_step)
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(coord = coord, sess = sess)
+
+    try:
+        count = 0
+        while not coord.should_stop():
+            e_val, l_val = sess.run([feature, label])
+            print("count : {}:feature:{}label:{}".format(count, e_val, l_val))
+            count += 1
+    except tf.errors.OutOfRangeError:
+        print('Read Complete')
+    finally:
+        coord.request_stop()
+    coord.request_stop()
+    coord.join(threads)
+    sess.close()
+    pass
+
 def main():
     initialize()
     #preprocess()
@@ -89,21 +113,22 @@ def main():
 
     #Neural Network
     log_dir = global_var.get_value('log_dir')
+    exam(1, 3, 100)
     #if tf.gfile.Exists(log_dir):
     #    tf.gfile.DeleteRecursively(log_dir)
     #tf.gfile.MakeDirs(log_dir)
     #exam = mnist.MNSIT_Train(784,10)
     #exam.set_log_dir('./TensorBoard')
     #exam.train()
-    exam = nn(28*28, int(global_var.get_value('classnum')),cluster_num = 16, hidden_neural_size = 128, num_step = 1, cnn_step = 2000, rnn_step = 20000, cnn_learning_rate = 0.002, rnn_learning_rate = 0.01, batch_size = 100)
-    exam.set_log_dir(log_dir + '/cnn')
-    exam.set_cnn_visualization()
-    exam.train_cnn()
+    #exam = nn(28*28, int(global_var.get_value('classnum')),cluster_num = 16, hidden_neural_size = 128, embedding_size = global_var.get_value('embedding_size'), num_step = 1, cnn_step = 2000, rnn_step = 20000, cnn_learning_rate = 0.002, rnn_learning_rate = 0.01, batch_size = 100)
+    #exam.set_log_dir(log_dir + '/cnn')
+    #exam.set_cnn_visualization()
+    #exam.train_cnn()
     #exam.feature_visualization(14)
-    exam.deconvolution(14)
+    #exam.deconvolution(14)
     #exam.set_log_dir(log_dir + '/rnn')
     #exam.train_rnn()
-    exam.close_sess()
+    #exam.close_sess()
     #input the train dataset
     pass
 
