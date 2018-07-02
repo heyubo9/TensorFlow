@@ -183,7 +183,7 @@ def read_data_sets(dtype = dtypes.float32, validation_size = 5000, reshape = Tru
     return base.Datasets(train = train, validation = validation, test = None)
 
 def read_csv(session, batch_size, num_epochs):
-    record_defaults = [[1], [1]]
+    record_defaults = [[1.0], [1.0], [1.0], [1.0], [1.0]]
     folder = []
     filename = global_var.get_value('filepath') + global_var.get_value('filename')
     folder.append(filename)
@@ -194,7 +194,7 @@ def read_csv(session, batch_size, num_epochs):
 
     ##need to be update 
     textline = tf.decode_csv(value, record_defaults = record_defaults)
-    x, y = tf.train.batch(textline, batch_size = batch_size, capacity = batch_size * 10)
+    p1, p2, p3, y1, y2 = tf.train.batch(textline, batch_size = batch_size, capacity = batch_size * 10)
     init = tf.local_variables_initializer()
     session.run(init)
-    return x, y
+    return tf.stack([p1, p2 ,p3]), tf.stack([y1, y2])

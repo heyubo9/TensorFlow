@@ -35,16 +35,16 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         self._cnn_visualization = visualization_cnn
         self._vis_layer_num = 1
         if embedding_size == 0:
-            self._embedding_size = 64 * cluster_num
+            embedding_size = 64 * cluster_num
         else:
-            self._embedding_size = embedding_size
+            embedding_size = embedding_size
 
         CNN.CNN.__init__(self, dropout)
         VLAD.NetVLAD.__init__(self, cluster_num)
-        LSTM.LSTM.__init__(self, output_size, 64 * cluster_num, hidden_neural_size, num_step, dropout, is_training)
+        LSTM.LSTM.__init__(self, output_size, embedding_size, hidden_neural_size, num_step, dropout, is_training)
         
-        with tf.name_scope('output'):
-            self._accurate_data = tf.placeholder(tf.float32,[None,self._output_size],name = 'output')
+        #with tf.name_scope('output'):
+        #    self._accurate_data = tf.placeholder(tf.float32,[None,self._output_size],name = 'output')
 
 
         self.__saver = tf.train.Saver(max_to_keep = 1)
@@ -110,7 +110,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
         return train_step, accuracy
 
-    def __model_rnn(self, input):
+    def __model_rnn(self, input, label):
         ###TODO
         #add some information to enhance the performance fo the malware flow detection
 
@@ -126,20 +126,18 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         #input = tf.transpose(input, [1, 0, 2])
         #input= tf.reshape(input, [-1, self.embedding_size])
         #print(input.shape)
-        #input = tf.split(input, self.num_step)
-        
         with tf.name_scope('rnn_model'):
             linear_output = self._add_lstm_layer(input)
             lstm_output = tf.nn.softsign(linear_output)
             #double input feature number
             output = self._add_liner_layer(lstm_output, 2 * self.hidden_neural_size, self.class_num)
         with tf.name_scope('rnn_loss'):
-            loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = output, labels =  self._accurate_data))
+            loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = output, labels = label))
             loss_scalar = tf.summary.scalar('cross_entropy', loss)
         with tf.name_scope('rnn_optimizer'):
             optimizer = tf.train.AdagradOptimizer(learning_rate = self._rnn_learning_rate).minimize(loss)
         with tf.name_scope('rnn_accuarcy'):
-            correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(self._accurate_data, 1))
+            correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(label, 1))
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
             accu_scalar = tf.summary.scalar('accuracy', accuracy)
         return optimizer, accuracy
@@ -157,6 +155,9 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             edge_len = int(math.sqrt(self._input_size))
             assert edge_len * edge_len == self._input_size
             self.__ximage = tf.reshape(self._x, [-1, edge_len, edge_len, 1])
+
+        with tf.name_scope('output'):
+            self._accurate_data =  tf.placeholder(tf.float32, [None, 10], name = 'output')
 
         with tf.name_scope('cnn') as scope:
             train_step, accuracy= self.__model_cnn()
@@ -205,14 +206,18 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         else:
             self.__sess = tf.Session()
         with tf.name_scope('input'):
-            input_feature = tf.placeholder(tf.float32,[None, self.num_step, self._input_size],name = 'input')
+            #rnn input shape: [batch_size, time_sequence_num, embedding_size]
+            #self._x = tf.placeholder(tf.float32,[None, self.num_step, self.embedding_size],name = 'input')
 
-        feature, label = read_csv(self._batch_size, self.num_step, self._rnn_step)
+            feature, label = read_csv(self.__sess, self._batch_size, self._rnn_step)
+            input = tf.reshape(feature, [-1, self.num_step, self.embedding_size])
+            input = tf.unstack(input, self.num_step, 1)
+            output = tf.reshape(label, [-1, self.class_num])
         coord = tf.train.Coordinator()
-        threads = tf.train.queue_runner(self.__sess, coord = coord)
+        threads = tf.train.start_queue_runners(sess = self.__sess, coord = coord)
 
         with tf.name_scope('rnn') as scope:
-            train_step, accuracy= self.__model_rnn(input_feature)
+            train_step, accuracy= self.__model_rnn(input, output)
 
             init = tf.global_variables_initializer()
             self.__sess.run(init)
@@ -223,21 +228,25 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             #test_writer = tf.summary.FileWriter(self._log_dir + '/test',self.__sess.graph)
 
         try:
-            i = 0;
+            i = 1;
             while not coord.should_stop():
-                batch_xs, batch_ys = self.__sess.run([feature, label])
-                batch_xs = batch_xs.reshape([batch_size, self.num_step, self.embedding_size])
-                self.__sess.run(train_step, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
-                accu = self.__sess.run(accuracy, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : 1})
-                summary = self.__sess.run(merge, feed_dict = {self._x : batch_xs, self._accurate_data : batch_ys, self.keep_prob : self._dropout})
-                train_writer.add_summary(summary, i + 1)
-                if i % 100 == 99:
-                    print('round {} accuarcy: {:.6f}'.format(i + 1, accu))
+                batch_xs = self.__sess.run(tf.Print(output, [label], summarize = 200))
+                x = self.__sess.run(tf.Print(label, [label], summarize = 200))
+                #batch_xs = batch_xs.reshape([batch_size, self.num_step, self.embedding_size])
+                self.__sess.run(train_step, feed_dict = {self.keep_prob : self._dropout})
+                accu = self.__sess.run(accuracy, feed_dict = {self.keep_prob : 1})
+                summary = self.__sess.run(merge, feed_dict = {self.keep_prob : self._dropout})
+                train_writer.add_summary(summary, i)
+                if i % 100 == 0:
+                    print('round {} accuarcy: {:.6f}'.format(i, accu))
+                i += 1
 
+            coord.request_stop()
+            coord.join(threads)
             graph = tf.get_default_graph()
             weight = graph.get_tensor_by_name('bidirectional_rnn/fw/basic_lstm_cell/kernel:0')
             w = self.__sess.run(weight)
-            print(w.shape)
+            #print(w.shape)
             #test_accu = self.__sess.run(accuracy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
             #print('validation : {:.6f}'.format(test_accu))
         except tf.errors.OutOfRangeError:

@@ -3,11 +3,11 @@
 
     architecture:use Convolution Neural Network and Long Short Term Memory
     dataset: CIC-IDS-2017
-    environment: mysql 5.7, python 3.5, tensorflow 1.7
+    environment: mysql 5.7, python 3.5, tensorflow 1.8
 
     author:heyubo
     create: 2018/3/8
-    last version: 2018/5/7
+    last version: 2018/7/2
 """
 from Model import mnist
 from Model import CNN
@@ -120,7 +120,7 @@ def main():
     #if tf.gfile.Exists(log_dir):
     #    tf.gfile.DeleteRecursively(log_dir)
     #tf.gfile.MakeDirs(log_dir)
-    exam = nn(int(global_var.get_value('weight')) * int(global_var.get_value('height')), 
+    exam = nn(int(global_var.get_value('image_weight')) * int(global_var.get_value('image_height')), 
               int(global_var.get_value('classnum')),
               cluster_num = int(global_var.get_value('cluster_num')), 
               hidden_neural_size = int(global_var.get_value('hidden_neural_size')), 
@@ -128,14 +128,14 @@ def main():
               num_step = int(global_var.get_value('num_step')), 
               cnn_step = int(global_var.get_value('cnn_epoch')), 
               rnn_step = int(global_var.get_value('rnn_epoch')), 
-              cnn_learning_rate = int(global_var.get_value('cnn_learning_rate')), 
-              rnn_learning_rate = int(global_var.get_value('cnn_learning_rate')), 
-              batch_size = int(global_var.get_value('cnn_learning_rate')))
-
+              cnn_learning_rate = float(global_var.get_value('cnn_learning_rate')), 
+              rnn_learning_rate = float(global_var.get_value('cnn_learning_rate')), 
+              batch_size = int(global_var.get_value('batch_size')))
+    log_dir = global_var.get_value('log_dir')
     ##this work is to train cnn network and visualize the cnn feature detection
-    #exam.set_log_dir(log_dir + '/cnn')
+    exam.set_log_dir(log_dir + '/cnn')
     #exam.set_cnn_visualization()
-    #exam.train_cnn()
+    exam.train_cnn()
     #exam.feature_visualization(14)
     #exam.deconvolution(14)
 
