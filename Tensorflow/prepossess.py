@@ -1,5 +1,5 @@
-import sklearn
-import pymining
+#import sklearn
+from assocrule import apriori, generateRules
 from scapy.all import *
 import csv
 
@@ -36,7 +36,7 @@ def flow_statistic(filename, srcIP, label, csvfile):
                 break
 
             ###for length appendment
-            if srcIP == src:
+            if src in srcIP:
                 direction = 1
             else:
                 direction = -1
@@ -56,28 +56,46 @@ def heartbeat_filter(list, srcIP, support, confident):
     session = []
     fragmentation = []
     result = []
-    for packet in list:
-
-        src = socket.inet_aton(packet['IP'].src)
-        dst = socket.inet_aton(packet['IP'].dst)
+    rules = []
+    for cluster in list:
+        for packet in cluster:
+            src = packet['IP'].src
+            dst = packet['IP'].dst
                         
-        if srcIP == src:
-            direction = 1
-        else:
-            direction = -1
+            if src in srcIP:
+                direction = 1
+            else:
+                direction = -1
 
-        item = direction * len(packet)
-        fragmentation.append(item)
-        if len(fragmentation) > 3 or packet is None:
+            item = direction * len(packet)
+            fragmentation.append(item)
+            if len(fragmentation) == 3:
+                session.append(fragmentation)
+                fragmentation = []
+                break
+        if len(fragmentation) != 0:
             session.append(fragmentation)
             fragmentation = []
 
     ###update data mining algorithm
-    rule = pymining.assocrules.mine_assoc_rules(session, support, confident)
-    print(result)
-    for i in session:
-        if i not in rule:
-            result.append(i)
+    L, suppData = apriori(session, minSupport = confident)
+    frozen_rule = generateRules(L, suppData, minConf = confident)
+    #rule = assocrules.mine_assoc_rules(session, min_support = support, min_confidence = confident)
+    for i in frozen_rule:
+        rule = []
+        for set in i:
+            if not isinstance(set, float):
+                for item in set:
+                    rule.append(item)
+        rules.append(rule)
+    print(rules)
+    for cluster in session:
+        find = False
+        for rule in rules:
+            if any([rule == cluster[i : i + len(rule)] for i in range(0, len(cluster) - len(rule) + 1)]):
+                find = True
+        if not find:
+            result.append(cluster)
 
     return result
     pass
@@ -94,6 +112,9 @@ def split_flow(filename, think_delta, response_delta, SCALE):
         pcapreader = PcapReader(filename)
         while True:
             packet = pcapreader.read_packet()
+            if packet is None:
+                break
+
             if ti_1 == 0:
                 ti_1 = packet.time
                 continue
@@ -105,25 +126,75 @@ def split_flow(filename, think_delta, response_delta, SCALE):
         ti_1 = 0
         pcapreader = PcapReader(filename)
 
+        i = 0
+        j = 0
+        k = 0
+        prev_packet_seq = 0
         while True:
             packet = pcapreader.read_packet()
+            if packet is None:
+                break
+
+            payload = packet['TCP'].payload
+            ack = packet['TCP'].flags & 16 
+            length = len(payload)
+            if len(payload) == 0 and ack == 0:
+                continue
+
             if ti_1 == 0 and t_last == 0:
                 ti_1 = packet.time
                 t_last = packet.time
+
+            if packet['TCP'].seq == prev_packet_seq:
+                ti_1 = packet.time
+                continue
+
             if packet.time - ti_1 > response_delta:
                 if packet.time - ti_1 > think_delta:
                     result.append(cluster)
                     t_last = packet.time
+                    cluster = []
+                    i += 1
                 elif packet.time - t_last > max_t:
                     result.append(cluster)
                     t_last = packet.time
+                    cluster = []
+                    j += 1
                 elif len(cluster) > 1:
                     if packet.time - ti_1 > SCALE * (ti_1 - t_last) / (len(cluster) - 1):
                         result.append(cluster)
                         t_last = packet.time
+                        cluster = []
+                        k += 1
+            prev_packet_seq = packet['TCP'].seq
             cluster.append(packet)
+            ti_1 = packet.time
         pcapreader.close()
+        print('branch 1 : {}; branch 2 : {}; branch 3 : {}'.format(i, j, k))
         return result
     except Scapy_Exception as e:
         print(e)
     pass
+
+def write_csv_file(list, label, filename):
+    head = ['packet1', 'packet2', 'packet3', 'label']
+    try:
+        out = open(filename, 'a', newline = '')
+        csv_writer = csv.writer(out, dialect = 'excel')
+        csv_writer.writerow(head)
+        for split in list:
+            while len(split) < 3:
+                split.append(0)
+
+            if label == 'benign':
+                split.append(0)
+            elif label == 'mm':
+                split.append(1)
+
+            csv_writer.writerow(split)
+
+        out.close()
+    except csv.Error as e:
+        print(e)
+        
+    

@@ -189,8 +189,8 @@ class pcap_reader:
         type = -1
         count = self.get_count()
         #make the dictionary
-        shutil.rmtree(filepath + "flow\\")
-        os.makedirs(filepath + "flow\\")
+        shutil.rmtree(filepath + "endpoint\\")
+        os.makedirs(filepath + "endpoint\\")
 
         #read the packet
         ###TODO 
@@ -204,11 +204,11 @@ class pcap_reader:
                 if packet['IP'].payload.name == 'TCP':
                     #put the upstream traffic and downlink traffic into one netflow
                     #last version: 2018/3/12
-                    tuple = set([packet['IP'].src, packet['IP'].dst, packet['IP'].payload.name, packet['IP'].payload.fields['sport'], packet['IP'].payload.fields['dport']])
+                    tuple = set([packet['IP'].src, packet['IP'].dst, packet['IP'].payload.name])
                     if tuple in list:
                         #last version:2018/3/8
                         class_index = list.index(tuple)
-                        writer = PcapWriter(filepath + "flow\\flow-" + str(class_index) + ".pcap", append = True)
+                        writer = PcapWriter(filepath + "endpoint\\session-" + str(class_index) + ".pcap", append = True)
                         writer.write(packet)
                         writer.flush()
                         writer.close()
@@ -216,7 +216,7 @@ class pcap_reader:
                         #last version:2018/3/8
                         list.append(tuple)
                         type += 1
-                        writer = PcapWriter(filepath + "flow\\flow-" + str(type) + ".pcap", append = False)
+                        writer = PcapWriter(filepath + "endpoint\\session-" + str(type) + ".pcap", append = False)
                         writer.write(packet)
                         writer.flush()
                         writer.close()

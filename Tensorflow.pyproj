@@ -21,6 +21,7 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Tensorflow\assocrule.py" />
     <Compile Include="Tensorflow\global_var.py" />
     <Compile Include="Tensorflow\Image_Reader.py" />
     <Compile Include="Tensorflow\input_data.py" />
@@ -33,6 +34,7 @@
     <Compile Include="Tensorflow\mysql.py" />
     <Compile Include="Tensorflow\nerualnetwork.py" />
     <Compile Include="Tensorflow\pcap_reader.py" />
+    <Compile Include="Tensorflow\prepossess.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="TensorBoard\" />
