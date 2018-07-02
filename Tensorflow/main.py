@@ -77,14 +77,14 @@ def initialize():
     global_var.set_value('rnn_learning_rate', cf.get('network', 'rnn_learning_rate'))
     global_var.set_value('num_step', cf.get('network', 'num_step'))
 
-def preprocess():
+def trans_img():
     """pre-process the pcap file and transfer to the image and label file"""
     #split flow
     pcapreader = pcap_reader.pcap_reader()
     pcapreader.flow_split()
-    #for i in range(pcapreader.get_count()):
-    #    pcapreader.flow_statistic(i)
-    #del pcapreader
+    for i in range(pcapreader.get_count()):
+        pcapreader.flow_statistic(i)
+    del pcapreader
 
     #traverse the file in the file root ".\dataset\image":
     root = global_var.get_value('filepath') + "flow"
@@ -93,73 +93,56 @@ def preprocess():
         image = pcap_reader.pcap2img(i, int(global_var.get_value('delta')))
         i += 1
 
-    ##transfer the file to the label
-    #label = pcap_reader.netflow2label()
-    #label.write_file()
+    #transfer the file to the label
+    label = pcap_reader.netflow2label()
+    label.write_file()
 
-def exam(batch_size, num_step, rnn_step):
-    sess = tf.Session()
-
-    feature, label = read_csv(sess, batch_size, num_step, rnn_step)
-    coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(coord = coord, sess = sess)
-
-    try:
-        count = 0
-        while not coord.should_stop():
-            e_val, l_val = sess.run([feature, label])
-            print("count : {}:feature:{}label:{}".format(count, e_val, l_val))
-            count += 1
-    except tf.errors.OutOfRangeError:
-        print('Read Complete')
-    finally:
-        coord.request_stop()
-    coord.request_stop()
-    coord.join(threads)
-    sess.close()
-    pass
-
-def main():
-    initialize()
-    #preprocess()
-    #rename()
-
-    #Neural Network
-    for i in range(6217):
+def trans_csv(filecount):
+    for i in range(filecount):
         filename = global_var.get_value('filepath') + 'endpoint\session-{}.pcap'.format(i)
         log_dir = global_var.get_value('log_dir')
-        #exam(1, 3, 100)
         flow = split_flow(filename, 10, 1, 2)
         client_IP = ['192.168.10.{}'.format(i) for i in range(0, 256)]
         clean_flow = heartbeat_filter(flow, client_IP, 3, 0.2)
         write_csv_file(clean_flow, 'benign', 
                        global_var.get_value('filepath') + 'dataset\csv\session-{}.csv'.format(i))
+
+def main():
+    initialize()
+    ##this work is to transfer the pcap file to the image file and dataset
+    #trans_img()
+    #rename()
+
+    ##this work is to transfer the pcap file to the csv file
+    #trans_csv(6217)
+
+    ##Neural Network
     #if tf.gfile.Exists(log_dir):
     #    tf.gfile.DeleteRecursively(log_dir)
     #tf.gfile.MakeDirs(log_dir)
-    #exam = mnist.MNSIT_Train(784,10)
-    #exam.set_log_dir('./TensorBoard')
-    #exam.train()
-    #exam = nn(int(global_var.get_value('weight')) * int(global_var.get_value('height')), 
-    #          int(global_var.get_value('classnum')),
-    #          cluster_num = int(global_var.get_value('cluster_num')), 
-    #          hidden_neural_size = int(global_var.get_value('hidden_neural_size')), 
-    #          embedding_size = int(global_var.get_value('embedding_size')), 
-    #          num_step = int(global_var.get_value('num_step')), 
-    #          cnn_step = int(global_var.get_value('cnn_epoch')), 
-    #          rnn_step = int(global_var.get_value('rnn_epoch')), 
-    #          cnn_learning_rate = int(global_var.get_value('cnn_learning_rate')), 
-    #          rnn_learning_rate = int(global_var.get_value('cnn_learning_rate')), 
-    #          batch_size = int(global_var.get_value('cnn_learning_rate')))
+    exam = nn(int(global_var.get_value('weight')) * int(global_var.get_value('height')), 
+              int(global_var.get_value('classnum')),
+              cluster_num = int(global_var.get_value('cluster_num')), 
+              hidden_neural_size = int(global_var.get_value('hidden_neural_size')), 
+              embedding_size = int(global_var.get_value('embedding_size')), 
+              num_step = int(global_var.get_value('num_step')), 
+              cnn_step = int(global_var.get_value('cnn_epoch')), 
+              rnn_step = int(global_var.get_value('rnn_epoch')), 
+              cnn_learning_rate = int(global_var.get_value('cnn_learning_rate')), 
+              rnn_learning_rate = int(global_var.get_value('cnn_learning_rate')), 
+              batch_size = int(global_var.get_value('cnn_learning_rate')))
+
+    ##this work is to train cnn network and visualize the cnn feature detection
     #exam.set_log_dir(log_dir + '/cnn')
     #exam.set_cnn_visualization()
     #exam.train_cnn()
     #exam.feature_visualization(14)
     #exam.deconvolution(14)
-    #exam.set_log_dir(log_dir + '/rnn')
-    #exam.train_rnn()
-    #exam.close_sess()
-    #input the train dataset
+
+    #this work is to train rnn network and visualize the rnn feature detection
+    exam.set_log_dir(log_dir + '/rnn')
+    exam.train_rnn()
+    exam.close_sess()
     pass
 
 if __name__ == '__main__':
