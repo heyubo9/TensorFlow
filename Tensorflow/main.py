@@ -133,9 +133,9 @@ def main():
               batch_size = int(global_var.get_value('batch_size')))
     log_dir = global_var.get_value('log_dir')
     ##this work is to train cnn network and visualize the cnn feature detection
-    exam.set_log_dir(log_dir + '/cnn')
+    #exam.set_log_dir(log_dir + '/cnn')
     #exam.set_cnn_visualization()
-    exam.train_cnn()
+    #exam.train_cnn()
     #exam.feature_visualization(14)
     #exam.deconvolution(14)
 
