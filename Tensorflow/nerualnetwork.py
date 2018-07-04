@@ -231,13 +231,11 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             i = 1;
             while not coord.should_stop():
                 ##print parameters
-                #batch_xs = self.__sess.run(tf.Print(input, [feature], summarize = 200))
-                #batch_xs = batch_xs.reshape([batch_size, self.num_step, self.embedding_size])
-                self.__sess.run(train_step, feed_dict = {self.keep_prob : self._dropout})
-                accu = self.__sess.run(accuracy, feed_dict = {self.keep_prob : 1})
-                summary = self.__sess.run(merge, feed_dict = {self.keep_prob : self._dropout})
+                #batch_xs = self.__sess.run(tf.Print(input, [feature], summarize = 600))
+                _, summary = self.__sess.run([train_step, merge], feed_dict = {self.keep_prob : self._dropout})
                 train_writer.add_summary(summary, i)
                 if i % 100 == 0:
+                    accu = self.__sess.run(accuracy, feed_dict = {self.keep_prob : 1})
                     print('round {} accuarcy: {:.6f}'.format(i, accu))
                 i += 1
                 
@@ -247,7 +245,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             graph = tf.get_default_graph()
             weight = graph.get_tensor_by_name('bidirectional_rnn/fw/basic_lstm_cell/kernel:0')
             w = self.__sess.run(weight)
-            #print(w.shape)
+
             #test_accu = self.__sess.run(accuracy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
             #print('validation : {:.6f}'.format(test_accu))
         except tf.errors.OutOfRangeError:

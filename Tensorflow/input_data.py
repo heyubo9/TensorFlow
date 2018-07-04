@@ -188,7 +188,7 @@ def read_csv(session, batch_size, num_epochs):
     filename = global_var.get_value('filepath') + global_var.get_value('filename')
     folder.append(filename)
 
-    filename_queue = tf.train.string_input_producer(folder, shuffle = False, num_epochs = num_epochs * batch_size)
+    filename_queue = tf.train.string_input_producer(folder, shuffle = False, num_epochs = num_epochs)
     reader = tf.TextLineReader(skip_header_lines = 1)
     key, value = reader.read(filename_queue)
 
