@@ -10,7 +10,7 @@ def flow_statistic(filename, srcIP, label, csvfile):
     #delay_start = 0
     #direction = 0
     row = []
-    head = ['packet1', 'packet2', 'packet3', 'label']
+    head = ['packet1', 'packet2', 'packet3','packet4','packet5','packet6','packet7','packet8','packet9','packet10', 'label']
     try:
         #initilize the variable
         pcapreader = PcapReader(filename)
@@ -23,7 +23,7 @@ def flow_statistic(filename, srcIP, label, csvfile):
             src = socket.inet_aton(packet['IP'].src)
             dst = socket.inet_aton(packet['IP'].dst)
             
-            if i > 3:
+            if i > 10:
                 ###spilt cluster
                 if label == 'mm':
                     row.append(1)
@@ -69,7 +69,8 @@ def heartbeat_filter(list, srcIP, support, confident):
 
             item = direction * len(packet)
             fragmentation.append(item)
-            if len(fragmentation) == 3:
+
+            if len(fragmentation) == 10:
                 session.append(fragmentation)
                 fragmentation = []
                 break
@@ -92,9 +93,13 @@ def heartbeat_filter(list, srcIP, support, confident):
     for cluster in session:
         find = False
         for rule in rules:
-            if any([rule == cluster[i : i + len(rule)] for i in range(0, len(cluster) - len(rule) + 1)]):
-                find = True
-        if not find:
+            for i in range(0, len(cluster) - len(rule) + 1):
+                if rule == cluster[i : i + len(rule)]:
+                    start = i
+                    end = i + len(rule)
+                    for index in range(start, end):
+                        del(cluster[start])
+        if cluster:
             result.append(cluster)
 
     return result
@@ -170,20 +175,19 @@ def split_flow(filename, think_delta, response_delta, SCALE):
             cluster.append(packet)
             ti_1 = packet.time
         pcapreader.close()
-        print('branch 1 : {}; branch 2 : {}; branch 3 : {}'.format(i, j, k))
         return result
     except Scapy_Exception as e:
         print(e)
     pass
 
 def write_csv_file(list, label, filename):
-    head = ['packet1', 'packet2', 'packet3', 'label']
+    head = ['packet1', 'packet2', 'packet3','packet4','packet5','packet6','packet7','packet8','packet9','packet10', 'label']
     try:
         out = open(filename, 'a', newline = '')
         csv_writer = csv.writer(out, dialect = 'excel')
-        csv_writer.writerow(head)
+        #csv_writer.writerow(head)
         for split in list:
-            while len(split) < 3:
+            while len(split) < 10:
                 split.append(0)
 
             if label == 'benign':

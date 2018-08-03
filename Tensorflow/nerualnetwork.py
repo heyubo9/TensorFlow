@@ -7,14 +7,14 @@ import tensorflow as tf
 import tensorflow.examples.tutorials.mnist.input_data as input_data
 from tensorflow.python.client import device_lib as _device_lib
 #import input_data
-from input_data import read_csv
+from input_data import read_csv_dataset, read_csv_test
 
 import matplotlib.pyplot as plt
 import numpy as np
 import math
 
 class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
-    def __init__(self, input_size, output_size, cluster_num, hidden_neural_size, num_step, embedding_size = 0, cnn_learning_rate = 0.001, rnn_learning_rate = 0.01, cnn_step = 1000, rnn_step = 5000, batch_size = 100, dropout = 0.9, is_training = True, visualization_cnn = False):
+    def __init__(self, input_size, output_size, cluster_num, hidden_neural_size, num_step, hidden_layer_num = 1, embedding_size = 0, cnn_learning_rate = 0.001, rnn_learning_rate = 0.01, cnn_step = 1000, rnn_step = 5000, batch_size = 100, dropout = 0.9, is_training = True, visualization_cnn = False):
         """construction function
         Args:
         	input_size the size of input
@@ -41,16 +41,16 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
         CNN.CNN.__init__(self, dropout)
         VLAD.NetVLAD.__init__(self, cluster_num)
-        LSTM.LSTM.__init__(self, output_size, embedding_size, hidden_neural_size, num_step, dropout, is_training)
+        LSTM.LSTM.__init__(self, output_size, embedding_size, hidden_neural_size, num_step, hidden_layer_num, dropout, is_training)
         
         #with tf.name_scope('output'):
         #    self._accurate_data = tf.placeholder(tf.float32,[None,self._output_size],name = 'output')
 
 
-        self.__saver = tf.train.Saver(max_to_keep = 1)
+        #self.__saver = tf.train.Saver(max_to_keep = 1)
 
         #self.flow = input_data.read_data_sets()
-        self.flow = input_data.read_data_sets("MNIST_data/", one_hot=True)
+        #self.flow = input_data.read_data_sets("MNIST_data/", one_hot=True)
         
     def set_log_dir(self,log_dir):
         """set the Tensorboard dictionary
@@ -88,13 +88,15 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
     def __model_cnn(self):
         with tf.name_scope('cnn_model'):
             conv1 = self._add_conv_layer(self.__ximage,1,5,5,[1,1,1,1],1,32,stddev = 0.1)
-            norm1, max_index = self._add_pool(conv1, 1, [1,2,2,1], [1,2,2,1])
+            norm1 = self._add_pool(conv1, 1, [1,2,2,1], [1,2,2,1])
             if self._vis_layer_num == 1:
-                self.store_param.append(max_index)
+                #self.store_param.append(max_index)
+                pass
             conv2 = self._add_conv_layer(norm1,2,5,5,[1,1,1,1],32,64,stddev = 0.1)
-            norm2, max_index = self._add_pool(conv2, 2, [1,2,2,1], [1,2,2,1])
+            norm2= self._add_pool(conv2, 2, [1,2,2,1], [1,2,2,1])
             if self._vis_layer_num == 2:
-                self.store_param.append(max_index)
+                #self.store_param.append(max_index)
+                pass
             vald_output = self._add_vald_layer(norm2, 64, 'vald')
             #fc = self._add_fclayer(vald_output, 1, 1024, 1024, stddev = 0.1)
             predict = self._output_layer(vald_output,64 * self._cluser_num,self._output_size, stddev = 0.1)
@@ -110,34 +112,28 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
         return train_step, accuracy
 
-    def __model_rnn(self, input, label):
+    def __model_rnn(self):
         ###TODO
         #add some information to enhance the performance fo the malware flow detection
+        with tf.name_scope('input'):
+            #rnn input shape: [batch_size, time_sequence_num, embedding_size]
+            self._x = tf.placeholder(tf.float32, [None, self.num_step, self.embedding_size], name = 'input')
+        with tf.name_scope('output'):
+            self._y = tf.placeholder(tf.float32, [None, self.class_num], name = 'output')
 
-        ##the shape became [batch_size, embedding_size(which is cluster_num * conv_output_feature), 1],
-        #input = tf.expand_dims(input, axis = 1, name = 'input')
-        ##then the input's shape became [batch_size, embedding_size, num_step(sequence length)]
-        ##list = []
-        ##for i in range(self.num_step):
-        ##    list.append(input_feature)
-        ##input = tf.parallel_stack(list)
-
-        ##reshape the input
-        #input = tf.transpose(input, [1, 0, 2])
-        #input= tf.reshape(input, [-1, self.embedding_size])
-        #print(input.shape)
         with tf.name_scope('rnn_model'):
+            input = tf.unstack(self._x, self.num_step, 1)
             linear_output = self._add_lstm_layer(input)
             lstm_output = tf.nn.softsign(linear_output)
             #double input feature number
             output = self._add_liner_layer(lstm_output, 2 * self.hidden_neural_size, self.class_num)
         with tf.name_scope('rnn_loss'):
-            loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = output, labels = label))
+            loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits = output, labels = self._y))
             loss_scalar = tf.summary.scalar('cross_entropy', loss)
         with tf.name_scope('rnn_optimizer'):
             optimizer = tf.train.AdagradOptimizer(learning_rate = self._rnn_learning_rate).minimize(loss)
         with tf.name_scope('rnn_accuarcy'):
-            correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(label, 1))
+            correct_prediction = tf.equal(tf.argmax(output, 1), tf.argmax(self._y, 1))
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
             accu_scalar = tf.summary.scalar('accuracy', accuracy)
         return optimizer, accuracy
@@ -205,19 +201,13 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             self.__sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         else:
             self.__sess = tf.Session()
-        with tf.name_scope('input'):
-            #rnn input shape: [batch_size, time_sequence_num, embedding_size]
-            #self._x = tf.placeholder(tf.float32,[None, self.num_step, self.embedding_size],name = 'input')
 
-            feature, label = read_csv(self.__sess, self._batch_size, self._rnn_step)
-            input = tf.reshape(feature, [-1, self.num_step, self.embedding_size])
-            input = tf.unstack(input, self.num_step, 1)
-            output = tf.reshape(label, [-1, self.class_num])
+        feature, label = read_csv_dataset('train.csv', self.__sess, self._batch_size, self._rnn_step)
         coord = tf.train.Coordinator()
         threads = tf.train.start_queue_runners(sess = self.__sess, coord = coord)
 
         with tf.name_scope('rnn') as scope:
-            train_step, accuracy= self.__model_rnn(input, output)
+            train_step, accuracy= self.__model_rnn()
 
             init = tf.global_variables_initializer()
             self.__sess.run(init)
@@ -232,19 +222,16 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             while not coord.should_stop():
                 ##print parameters
                 #batch_xs = self.__sess.run(tf.Print(input, [feature], summarize = 600))
-                _, summary = self.__sess.run([train_step, merge], feed_dict = {self.keep_prob : self._dropout})
+                batch_xs, batch_ys = self.__sess.run([feature, label])
+                batch_xs = batch_xs.reshape([-1, self.num_step, self.embedding_size])
+                _, summary = self.__sess.run([train_step, merge], feed_dict = {self._x : batch_xs, self._y : batch_ys, self._keep_prob : self._dropout})
                 train_writer.add_summary(summary, i)
                 if i % 100 == 0:
-                    accu = self.__sess.run(accuracy, feed_dict = {self.keep_prob : 1})
+                    accu = self.__sess.run(accuracy, feed_dict = {self._x : batch_xs, self._y : batch_ys, self._keep_prob : 1})
                     print('round {} accuarcy: {:.6f}'.format(i, accu))
                 i += 1
                 
             print(i)
-            coord.request_stop()
-            coord.join(threads)
-            graph = tf.get_default_graph()
-            weight = graph.get_tensor_by_name('bidirectional_rnn/fw/basic_lstm_cell/kernel:0')
-            w = self.__sess.run(weight)
 
             #test_accu = self.__sess.run(accuracy, feed_dict = {self._x : self.flow.validation.images, self._accurate_data : self.flow.validation.labels, self.keep_prob : 1})
             #print('validation : {:.6f}'.format(test_accu))
@@ -252,7 +239,35 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             print(i)
             print('Done Training')
         finally:
-            return
+            coord.request_stop()
+            coord.join(threads)
+
+            ##visualize the weight param
+            #graph = tf.get_default_graph()
+            #weight = graph.get_tensor_by_name('bidirectional_rnn/fw/basic_lstm_cell/kernel:0')
+            #w = self.__sess.run(weight)
+
+            ##running the test
+            print('begin valid')
+            mm_input, mm_label = read_csv_test('valid_mm.csv', self.num_step)
+            mm_input = mm_input.reshape([-1, self.num_step, self.embedding_size])
+            benign_input, benign_label = read_csv_test('valid_benign.csv', self.num_step)
+            benign_input = benign_input.reshape([-1, self.num_step, self.embedding_size])
+            input, label = read_csv_test('valid.csv', self.num_step)
+            input = input.reshape([-1, self.num_step, self.embedding_size])
+
+            accu = self.__sess.run(accuracy,  feed_dict = {self._x : input, self._y : label, self._keep_prob : 1})
+            mm_accu = self.__sess.run(accuracy,  feed_dict = {self._x : mm_input, self._y : mm_label, self._keep_prob : 1})
+            benign_accu = self.__sess.run(accuracy,  feed_dict = {self._x : benign_input, self._y : benign_label, self._keep_prob : 1})
+            print('Detection : {:.6f} , false: {:.6f}, accuarcy : {:.6f}'.format(mm_accu, 1-benign_accu, accu))
+            
+            print('begin test')
+            input, label = read_csv_test('test.csv', self.num_step)
+            input = input.reshape([-1, self.num_step, self.embedding_size])
+
+            accu = self.__sess.run(accuracy,  feed_dict = {self._x : input, self._y : label, self._keep_prob : 1})
+            print('Detection : {:.6f}'.format(accu))
+            return 
 
     def feature_visualization(self, input_feature_num):
         """visualize the CNN feature extraction
@@ -302,7 +317,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         image = self.flow.train.images[start : end]
         #visualize input image
         fig, ax = plt.subplots(figsize = (2, 2))
-        ax.imshow(np.reshape(image, (28,28)), cmap = plt.cm.gray)
+        ax.imshow(np.reshape(image, (28,28)), cmap = plt.cm.gray) 
         plt.show()
 
         input = graph.get_tensor_by_name('input/input:0')

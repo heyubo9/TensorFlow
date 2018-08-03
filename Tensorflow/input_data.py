@@ -7,6 +7,7 @@ import os
 import tensorflow as tf
 from PIL import Image
 import global_var
+import pandas as pd
 
 from tensorflow.contrib.learn.python.learn.datasets import base
 from tensorflow.python.framework import dtypes
@@ -182,11 +183,12 @@ def read_data_sets(dtype = dtypes.float32, validation_size = 5000, reshape = Tru
 
     return base.Datasets(train = train, validation = validation, test = None)
 
-def read_csv(session, batch_size, num_epochs):
-    record_defaults = [[1.0], [1.0], [1.0], [1.0], [1.0]]
+def read_csv_dataset(filename, session, batch_size, num_epochs):
+    record_defaults = [[1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0], [1.0]]
     folder = []
-    filename = global_var.get_value('filepath') + global_var.get_value('filename')
+    filename = global_var.get_value('filepath') + filename
     folder.append(filename)
+    print(filename)
 
     filename_queue = tf.train.string_input_producer(folder, shuffle = False, num_epochs = num_epochs)
     reader = tf.TextLineReader(skip_header_lines = 1)
@@ -194,7 +196,19 @@ def read_csv(session, batch_size, num_epochs):
 
     ##need to be update 
     textline = tf.decode_csv(value, record_defaults = record_defaults)
-    p1, p2, p3, y1, y2 = tf.train.batch(textline, batch_size = batch_size, capacity = batch_size * 10)
+    p1, p2, p3, p4, p5, p6, p7, p8, p9, p10, y1, y2 = tf.train.batch(textline, batch_size = batch_size, capacity = batch_size)
     init = tf.local_variables_initializer()
     session.run(init)
-    return tf.stack([p1, p2 ,p3], axis = 1), tf.stack([y1, y2], axis = 1)
+    return tf.stack([p1, p2 ,p3, p4, p5, p6, p7, p8, p9, p10], axis = 1), tf.stack([y1, y2], axis = 1)
+
+def read_csv_test(filename, n_step):
+    filename = global_var.get_value('filepath') + filename
+
+    col = [i for i in range(n_step)]
+
+    data = pd.read_csv(filename, header = 1, usecols = col)
+    label = pd.read_csv(filename, header = 1, usecols = [10,11])
+
+    data = data.as_matrix().astype(numpy.float)
+    label = label.as_matrix().astype(numpy.float)
+    return data, label

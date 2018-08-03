@@ -75,22 +75,22 @@ def calcConf(freqSet, H, supportData, brl, minConf=0.7):
     for conseq in H:
         conf = supportData[freqSet]/supportData[freqSet-conseq] #calc confidence
         if conf >= minConf: 
-            print(freqSet-conseq,'-->',conseq,'conf:',conf)
+            #print(freqSet-conseq,'-->',conseq,'conf:',conf)
             brl.append((freqSet-conseq, conseq, conf))
             prunedH.append(conseq)
     return prunedH
 
 def rulesFromConseq(freqSet, H, supportData, brl, minConf=0.7):
-    print("freqSet:",freqSet)
+    #print("freqSet:",freqSet)
     
     Hmp1=calcConf(freqSet, H, supportData, brl, minConf)
     
     m = len(Hmp1[0])
-    print("m:",m,"Hmp1 now:",Hmp1)
+    #print("m:",m,"Hmp1 now:",Hmp1)
     if (len(freqSet) > (m + 1)): #try further merging
         Hmp1 = aprioriGen(Hmp1, m+1)#create Hm+1 new candidates
-        print('Hmp1:',Hmp1)
+        #print('Hmp1:',Hmp1)
         Hmp1 = calcConf(freqSet, Hmp1, supportData, brl, minConf)
-        print('Hmp1 after calculate:',Hmp1)
+        #print('Hmp1 after calculate:',Hmp1)
         if (len(Hmp1) > 1):    #need at least two sets to merge
             rulesFromConseq(freqSet, Hmp1, supportData, brl, minConf)

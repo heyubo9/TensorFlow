@@ -17,7 +17,6 @@ import pcap_reader
 import input_data
 import configparser
 import global_var
-from input_data import read_csv
 import os
 import shutil
 from prepossess import split_flow, heartbeat_filter, write_csv_file
@@ -67,12 +66,14 @@ def initialize():
     
     global_var.set_value('log_dir', cf.get('network','log_dir'))
     global_var.set_value('delta', cf.get('network','delta'))
+    global_var.set_value('dropout', cf.get('network', 'dropout'))
     global_var.set_value('embedding_size', cf.get('network', 'embedding_size'))
     global_var.set_value('cluster_num', cf.get('network', 'cluster_num'))
     global_var.set_value('batch_size', cf.get('network', 'batch_size'))
     global_var.set_value('rnn_epoch', cf.get('network', 'rnn_epoch'))
     global_var.set_value('cnn_epoch', cf.get('network', 'cnn_epoch'))
     global_var.set_value('hidden_neural_size', cf.get('network', 'hidden_neural_size'))
+    global_var.set_value('hidden_layer_num', cf.get('network', 'hidden_layer_num'))
     global_var.set_value('cnn_learning_rate', cf.get('network', 'cnn_learning_rate'))
     global_var.set_value('rnn_learning_rate', cf.get('network', 'rnn_learning_rate'))
     global_var.set_value('num_step', cf.get('network', 'num_step'))
@@ -98,14 +99,21 @@ def trans_img():
     label.write_file()
 
 def trans_csv(filecount):
-    for i in range(filecount):
-        filename = global_var.get_value('filepath') + 'endpoint\session-{}.pcap'.format(i)
-        log_dir = global_var.get_value('log_dir')
-        flow = split_flow(filename, 10, 1, 2)
-        client_IP = ['192.168.10.{}'.format(i) for i in range(0, 256)]
-        clean_flow = heartbeat_filter(flow, client_IP, 3, 0.2)
-        write_csv_file(clean_flow, 'benign', 
-                       global_var.get_value('filepath') + 'dataset\csv\session-{}.csv'.format(i))
+    #for i in range(filecount):
+    #    #begein dataset
+    #    filename = global_var.get_value('filepath') + 'endpoint\session-{}.pcap'.format(i)
+    #    client_IP = ['192.168.10.{}'.format(i) for i in range(0, 256)]
+    #    write_filename = global_var.get_value('filepath') + 'dataset\csv\session-{}.csv'.format(i)
+
+    ##mm dataset
+    for i in range(1, filecount + 1):
+        filename = global_var.get_value('filepath') + 'session-{}.pcapng'.format(i)
+        write_filename = global_var.get_value('filepath') + 'test.csv'
+        client_IP = ['192.168.233.130','192.168.233.135','192.168.233.136','192.168.233.138','192.168.233.140','192.168.233.142','192.168.233.143','192.168.233.144','192.168.233.145','192.168.233.147']
+        flow = split_flow(filename, 7, 0.4, 1.2)
+        
+        clean_flow = heartbeat_filter(flow, client_IP, 3, 0.8)
+        write_csv_file(clean_flow, 'mm', write_filename)
 
 def main():
     initialize()
@@ -114,7 +122,7 @@ def main():
     #rename()
 
     ##this work is to transfer the pcap file to the csv file
-    #trans_csv(6217)
+    #trans_csv(10)
 
     ##Neural Network
     #if tf.gfile.Exists(log_dir):
@@ -123,18 +131,20 @@ def main():
     exam = nn(int(global_var.get_value('image_weight')) * int(global_var.get_value('image_height')), 
               int(global_var.get_value('classnum')),
               cluster_num = int(global_var.get_value('cluster_num')), 
+              dropout = float(global_var.get_value('dropout')),
               hidden_neural_size = int(global_var.get_value('hidden_neural_size')), 
+              hidden_layer_num = int(global_var.get_value('hidden_layer_num')), 
               embedding_size = int(global_var.get_value('embedding_size')), 
               num_step = int(global_var.get_value('num_step')), 
               cnn_step = int(global_var.get_value('cnn_epoch')), 
               rnn_step = int(global_var.get_value('rnn_epoch')), 
               cnn_learning_rate = float(global_var.get_value('cnn_learning_rate')), 
-              rnn_learning_rate = float(global_var.get_value('cnn_learning_rate')), 
+              rnn_learning_rate = float(global_var.get_value('rnn_learning_rate')), 
               batch_size = int(global_var.get_value('batch_size')))
     log_dir = global_var.get_value('log_dir')
     ##this work is to train cnn network and visualize the cnn feature detection
     #exam.set_log_dir(log_dir + '/cnn')
-    #exam.set_cnn_visualization()
+    ##exam.set_cnn_visualization()
     #exam.train_cnn()
     #exam.feature_visualization(14)
     #exam.deconvolution(14)
