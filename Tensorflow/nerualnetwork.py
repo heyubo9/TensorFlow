@@ -4,9 +4,9 @@ from Model import VLAD
 from Model import LSTM
 
 import tensorflow as tf
-import tensorflow.examples.tutorials.mnist.input_data as input_data
+#import tensorflow.examples.tutorials.mnist.input_data as input_data
 from tensorflow.python.client import device_lib as _device_lib
-#import input_data
+import input_data
 from input_data import read_csv_dataset, read_csv_test
 
 import matplotlib.pyplot as plt
@@ -47,9 +47,8 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         #    self._accurate_data = tf.placeholder(tf.float32,[None,self._output_size],name = 'output')
 
 
-        #self.__saver = tf.train.Saver(max_to_keep = 1)
 
-        #self.flow = input_data.read_data_sets()
+        self.flow = input_data.read_data_sets()
         #self.flow = input_data.read_data_sets("MNIST_data/", one_hot=True)
         
     def set_log_dir(self,log_dir):
@@ -146,6 +145,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             self.__sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
         else:
             self.__sess = tf.Session()
+        
         with tf.name_scope('input'):
             self._x = tf.placeholder(tf.float32,[None,self._input_size],name = 'input')
             edge_len = int(math.sqrt(self._input_size))
@@ -160,7 +160,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
             init = tf.global_variables_initializer()
             self.__sess.run(init)
-
+            self.__saver = tf.train.Saver(max_to_keep = 1)
             #merge the summary and write it to the tensorboard
             merge = tf.summary.merge(tf.get_collection(tf.GraphKeys.SUMMARIES, scope))
             train_writer = tf.summary.FileWriter(self._log_dir + '/train', self.__sess.graph)
@@ -325,9 +325,9 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         ###TODO
         #add selection to select the maximum activation feature to visualization the response convolution filter
         #image_feature = self.__sess.run(output, feed_dict = {input : image})
-        max = tf.arg_max(output, 1)
-        max = tf.arg_max(max,2)
-        np.insert
+        #max = tf.arg_max(output, 1)
+        #max = tf.arg_max(max,2)
+        #np.insert
 
         while self._vis_layer_num > 0:
             max_index = self.store_param.pop()
