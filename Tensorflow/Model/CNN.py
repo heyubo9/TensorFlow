@@ -89,7 +89,7 @@ class CNN():
         """
         string = 'pool_' + str(layer_index)
         with tf.variable_scope(string) as scope:
-            return tf.nn.max_pool(input, ksize, stride, padding = padding,name = 'pool')
+            return tf.nn.max_pool_with_argmax(input, ksize, stride, padding = padding,name = 'pool')
 
     def _add_fclayer(self,input,layer_index,input_feature_num,output_feature_num,mean = 0.0,stddev = 1.0):
         """add a fully connect layer to the model

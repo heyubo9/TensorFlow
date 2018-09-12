@@ -87,14 +87,14 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
     def __model_cnn(self):
         with tf.name_scope('cnn_model'):
             conv1 = self._add_conv_layer(self.__ximage,1,5,5,[1,1,1,1],1,32,stddev = 0.1)
-            norm1 = self._add_pool(conv1, 1, [1,2,2,1], [1,2,2,1])
+            norm1, max_index = self._add_pool(conv1, 1, [1,2,2,1], [1,2,2,1])
             if self._vis_layer_num == 1:
-                #self.store_param.append(max_index)
+                self.store_param.append(max_index)
                 pass
             conv2 = self._add_conv_layer(norm1,2,5,5,[1,1,1,1],32,64,stddev = 0.1)
-            norm2= self._add_pool(conv2, 2, [1,2,2,1], [1,2,2,1])
+            norm2, max_index = self._add_pool(conv2, 2, [1,2,2,1], [1,2,2,1])
             if self._vis_layer_num == 2:
-                #self.store_param.append(max_index)
+                self.store_param.append(max_index)
                 pass
             vald_output = self._add_vald_layer(norm2, 64, 'vald')
             #fc = self._add_fclayer(vald_output, 1, 1024, 1024, stddev = 0.1)
