@@ -309,8 +309,11 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
     def deconvolution(self, image_index):
         """deconvolution network to extract the visualize feature
+        only available for GPU model
         """
         #model
+        if not self.is_gpu_available():
+            return
         graph = tf.get_default_graph()
         start = image_index
         end = image_index + 1
