@@ -4,9 +4,9 @@ from Model import VLAD
 from Model import LSTM
 
 import tensorflow as tf
-#import tensorflow.examples.tutorials.mnist.input_data as input_data
+import tensorflow.examples.tutorials.mnist.input_data as input_data
 from tensorflow.python.client import device_lib as _device_lib
-import input_data
+#import input_data
 from input_data import read_csv_dataset, read_csv_test
 
 import matplotlib.pyplot as plt
@@ -48,8 +48,8 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
 
 
-        self.flow = input_data.read_data_sets()
-        #self.flow = input_data.read_data_sets("MNIST_data/", one_hot=True)
+        #self.flow = input_data.read_data_sets()
+        self.flow = input_data.read_data_sets("MNIST_data/", one_hot=True)
         
     def set_log_dir(self,log_dir):
         """set the Tensorboard dictionary
@@ -90,11 +90,15 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             norm1, max_index = self._add_pool(conv1, 1, [1,2,2,1], [1,2,2,1])
             if self._vis_layer_num == 1:
                 self.store_param.append(max_index)
+                self.store_param.append(norm1.get_shape().as_list())
+                self.store_param.append(32)
                 pass
             conv2 = self._add_conv_layer(norm1,2,5,5,[1,1,1,1],32,64,stddev = 0.1)
             norm2, max_index = self._add_pool(conv2, 2, [1,2,2,1], [1,2,2,1])
             if self._vis_layer_num == 2:
                 self.store_param.append(max_index)
+                self.store_param.append(tf.shape(norm2))
+                self.store_param.append(64)
                 pass
             vald_output = self._add_vald_layer(norm2, 64, 'vald')
             #fc = self._add_fclayer(vald_output, 1, 1024, 1024, stddev = 0.1)
@@ -147,7 +151,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             self.__sess = tf.Session()
         
         with tf.name_scope('input'):
-            self._x = tf.placeholder(tf.float32,[None,self._input_size],name = 'input')
+            self._x = tf.placeholder(tf.float32,[None, self._input_size],name = 'input')
             edge_len = int(math.sqrt(self._input_size))
             assert edge_len * edge_len == self._input_size
             self.__ximage = tf.reshape(self._x, [-1, edge_len, edge_len, 1])
@@ -187,15 +191,6 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
     def train_rnn(self):
         print('run lstm neural network')
 
-        #self.__sess = tf.Session()
-
-        #self.__saver = tf.train.import_meta_graph('./saver/model.meta')
-        #self.__saver.restore(self.__sess, tf.train.latest_checkpoint('./saver/'))
-
-        #graph = tf.get_default_graph()
-        #self._x = graph.get_tensor_by_name('input/input:0')
-        #input_feature = graph.get_tensor_by_name('cnn/cnn_model/vald/output:0')
-        #input_feature = tf.stop_gradient(input_feature)
         if self.is_gpu_available():
             gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.7)
             self.__sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
@@ -207,7 +202,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         threads = tf.train.start_queue_runners(sess = self.__sess, coord = coord)
 
         with tf.name_scope('rnn') as scope:
-            train_step, accuracy= self.__model_rnn()
+            train_step, accuracy = self.__model_rnn()
 
             init = tf.global_variables_initializer()
             self.__sess.run(init)
@@ -307,6 +302,61 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         plt.show()
         pass
 
+    def find_max_activite(self, image_index):
+        """find maximum activation in feature of the origin image
+        """
+        graph = tf.get_default_graph()
+        start = image_index
+        end = image_index + 1
+        image = self.flow.train.images[start : end]
+        top_layer = self._vis_layer_num
+        #visualize input image
+        fig, ax = plt.subplots(figsize = (2, 2))
+        ax.imshow(np.reshape(image, (28,28)), cmap = plt.cm.gray) 
+        plt.show()
+
+        input = graph.get_tensor_by_name('input/input:0')
+        output = graph.get_tensor_by_name('cnn/cnn_model/pool_{}/pool:0'.format(self._vis_layer_num))
+
+        feature_num = self.store_param.pop()
+        tensor_shape = self.store_param.pop()
+        feature_output = self.__sess.run(output,feed_dict = {input : image})
+        feature = self.__sess.run(tf.transpose(feature_output, [3, 0, 1, 2]))
+        #model
+        feature_tensor = tf.placeholder(tf.float32, shape = tensor_shape, name = 'feature')
+        while self._vis_layer_num > 0:
+            max_index = self.store_param.pop()
+            bias = self.store_param.pop()
+            weight = self.store_param.pop()
+            output_shape = self.store_param.pop()
+            index = self.__sess.run(max_index, feed_dict = {input : image})
+            if self._vis_layer_num == top_layer:
+                unpool = self._add_unpool_layer(feature_tensor, index)
+            else:
+                unpool = self._add_unpool_layer(output, index)
+            unbias = tf.subtract(unpool, bias)
+            output = self._add_deconv_layer(unpool, weight, output_shape, stride = [1, 1, 1, 1])
+            self._vis_layer_num -= 1
+
+        
+        #feature visualization    
+        for i in range(feature_num):
+            #find maximum feature activitation in one feautre image and extend the deminsion of one image into shape
+            temp = np.zeros_like(feature)
+            temp[0, i] = feature[0, i]
+            max_activitation = np.zeros_like(feature)
+
+            max_index_flat = np.nanargmax(temp)
+            max_index = np.unravel_index(max_index_flat, temp.shape)
+            max_activitation[max_index] = temp[max_index]
+
+            output = self.__sess.run(output, feed_dict = {feature_tensor : max_activitation, input : image})
+            fig, ax = plt.subplots(figsize = (2, 2))
+            ax.imshow(np.reshape(output, (28,28)), cmap = plt.cm.gray)
+            plt.show()
+        pass
+
+
     def deconvolution(self, image_index):
         """deconvolution network to extract the visualize feature
         """
@@ -324,11 +374,9 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         output = graph.get_tensor_by_name('cnn/cnn_model/pool_{}/pool:0'.format(self._vis_layer_num))
         ###TODO
         #add selection to select the maximum activation feature to visualization the response convolution filter
-        #image_feature = self.__sess.run(output, feed_dict = {input : image})
-        #max = tf.arg_max(output, 1)
-        #max = tf.arg_max(max,2)
-        #np.insert
 
+        self.store_param.pop()
+        self.store_param.pop()
         while self._vis_layer_num > 0:
             max_index = self.store_param.pop()
             bias = self.store_param.pop()

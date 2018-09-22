@@ -144,10 +144,11 @@ def main():
     log_dir = global_var.get_value('log_dir')
     #this work is to train cnn network and visualize the cnn feature detection
     exam.set_log_dir(log_dir + '/cnn')
-    #exam.set_cnn_visualization()
+    exam.set_cnn_visualization()
     exam.train_cnn()
-    exam.feature_visualization(14)
-    exam.deconvolution(14)
+    #exam.feature_visualization(14)
+    exam.find_max_activite(14)
+    #exam.deconvolution(14)
 
     #this work is to train rnn network and visualize the rnn feature detection
     #exam.set_log_dir(log_dir + '/rnn')
