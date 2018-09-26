@@ -89,15 +89,13 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             conv1 = self._add_conv_layer(self.__ximage,1,5,5,[1,1,1,1],1,32,stddev = 0.1)
             norm1, max_index = self._add_pool(conv1, 1, [1,2,2,1], [1,2,2,1])
             if self._vis_layer_num == 1:
-                self.store_param.append(max_index)
                 self.store_param.append(norm1.get_shape().as_list())
                 self.store_param.append(32)
                 pass
             conv2 = self._add_conv_layer(norm1,2,5,5,[1,1,1,1],32,64,stddev = 0.1)
             norm2, max_index = self._add_pool(conv2, 2, [1,2,2,1], [1,2,2,1])
             if self._vis_layer_num == 2:
-                self.store_param.append(max_index)
-                self.store_param.append(tf.shape(norm2))
+                self.store_param.append(norm2.get_shape().as_list())
                 self.store_param.append(64)
                 pass
             vald_output = self._add_vald_layer(norm2, 64, 'vald')
@@ -321,7 +319,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         feature_num = self.store_param.pop()
         tensor_shape = self.store_param.pop()
         feature_output = self.__sess.run(output,feed_dict = {input : image})
-        feature = self.__sess.run(tf.transpose(feature_output, [3, 0, 1, 2]))
+        feature = self.__sess.run(tf.transpose(feature_output, [0, 3, 1, 2]))
         #model
         feature_tensor = tf.placeholder(tf.float32, shape = tensor_shape, name = 'feature')
         while self._vis_layer_num > 0:
@@ -349,10 +347,11 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             max_index_flat = np.nanargmax(temp)
             max_index = np.unravel_index(max_index_flat, temp.shape)
             max_activitation[max_index] = temp[max_index]
+            max_activitation = max_activitation.transpose([0, 2, 3, 1])
 
-            output = self.__sess.run(output, feed_dict = {feature_tensor : max_activitation, input : image})
+            image_output = self.__sess.run(output, feed_dict = {feature_tensor : max_activitation, input : image})
             fig, ax = plt.subplots(figsize = (2, 2))
-            ax.imshow(np.reshape(output, (28,28)), cmap = plt.cm.gray)
+            ax.imshow(np.reshape(image_output, (28,28)), cmap = plt.cm.gray)
             plt.show()
         pass
 
