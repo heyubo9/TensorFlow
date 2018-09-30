@@ -29,6 +29,9 @@
     <Compile Include="Tensorflow\Model\CNN.py" />
     <Compile Include="Tensorflow\Model\LSTM.py" />
     <Compile Include="Tensorflow\Model\mnist.py" />
+    <Compile Include="Tensorflow\Model\SRNN.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Tensorflow\Model\VLAD.py" />
     <Compile Include="Tensorflow\Model\__init__.py" />
     <Compile Include="Tensorflow\mysql.py" />

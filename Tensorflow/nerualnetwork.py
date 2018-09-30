@@ -86,12 +86,12 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
 
     def __model_cnn(self):
         with tf.name_scope('cnn_model'):
-            conv1 = self._add_conv_layer(self.__ximage,1,5,5,[1,1,1,1],1,32,stddev = 0.1)
+            conv1 = self._add_conv2d_layer(self.__ximage,1,5,5,[1,1,1,1],1,32,stddev = 0.1)
             norm1 = self._add_pool(conv1, 1, [1,2,2,1], [1,2,2,1])
             if self._vis_layer_num == 1:
                 #self.store_param.append(max_index)
                 pass
-            conv2 = self._add_conv_layer(norm1,2,5,5,[1,1,1,1],32,64,stddev = 0.1)
+            conv2 = self._add_conv2d_layer(norm1,2,5,5,[1,1,1,1],32,64,stddev = 0.1)
             norm2= self._add_pool(conv2, 2, [1,2,2,1], [1,2,2,1])
             if self._vis_layer_num == 2:
                 #self.store_param.append(max_index)
@@ -289,7 +289,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
         conv_output = self.__sess.run(feature, feed_dict = {self._x : input})
         conv = self.__sess.run(tf.transpose(conv_output, [3, 0, 1, 2]))
         fig, ax = plt.subplots(ncols = 16, figsize = (16, 1))
-        for i in range(16):
+        for i in range(32):
             ax[i].imshow(conv[i][0], cmap = plt.cm.gray)
         plt.title('conv')
         plt.show()
@@ -340,7 +340,7 @@ class nn(CNN.CNN, VLAD.NetVLAD, LSTM.LSTM):
             index = self.__sess.run(max_index, feed_dict = {input : image})
             unpool = self._add_unpool_layer(output, index)
             unbias = tf.subtract(unpool, bias)
-            output = self._add_deconv_layer(unpool, weight, output_shape, stride = [1, 1, 1, 1])
+            output = self._add_deconv2d_layer(unpool, weight, output_shape, stride = [1, 1, 1, 1])
             self._vis_layer_num -= 1
 
         #feature visualization

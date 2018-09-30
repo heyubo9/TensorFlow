@@ -39,9 +39,46 @@ class CNN():
         min_scalar = tf.summary.scalar('min',tf.reduce_min(var))
         hist_scalar = tf.summary.histogram('histogram',var)
         return tf.summary.merge_all()
+    
+    def _add_conv1d_layer(self, input, layer_index, conv_kernel_length, stride, input_feature_num, output_feature_num, mean = 0.0, stddev = 1.0):
+        """add a 1D-convolution layer to the model
 
-    def _add_conv_layer(self,input,layer_index,conv_kernel_x,conv_kernel_y,stride,input_feature_num,output_feature_num,mean = 0.0,stddev = 1.0):
-        """add a convolution layer to the model
+        convolution kernel size(shape):[conv_kernel_length, input_feature_num, output_feature_num]
+        the weight obeys Gauss distribution.
+        Args:
+        	input: the input tensor to the layer, size = [batch_num, input_width, channel_in]
+        	layer_index: the layer index of the layer
+            conv_kernel_length: the length of the convolutional filter
+        	stride: the size of stride
+        	input_feature_num: the number of the input feature
+        	output_feature_num: the number of the output feature
+        	mean: the mean of the weight initilization
+        	stddev: the standard devision of the weight initilization 
+        Return:
+            output: a image with operation convolution and max_pooling
+        """
+        string = 'conv_'+str(layer_index)
+        with tf.variable_scope(string) as scope:
+            with tf.name_scope('weight'):
+                shape = [conv_kernel_length, input_feature_num,output_feature_num]
+                weight = self.__weight_init(shape, mean, stddev)
+                self.__variable_summaries(weight)
+            with tf.name_scope('bias'):
+                shape = [output_feature_num]
+                bias = self.__bias_init(shape, 0.1)
+                self.__variable_summaries(bias)
+            conv = tf.nn.conv1d(input, weight, stride, padding = 'SAME')
+            sconv = tf.nn.bias_add(conv, bias)
+            conv = tf.nn.relu(conv, name = scope.name)
+
+            if self._vis_layer_num >= layer_index and self._cnn_visualization == True:
+                self.store_param.append(tf.shape(input))
+                self.store_param.append(weight)
+                self.store_param.append(bias)
+        return conv
+
+    def _add_conv2d_layer(self,input,layer_index,conv_kernel_x,conv_kernel_y,stride,input_feature_num,output_feature_num,mean = 0.0,stddev = 1.0):
+        """add a 2D-convolution layer to the model
 
         convolution kernel size(shape):[conv_kernel_x,conv_kernel_y,input_feature_num,output_feature_num]
         the weight obeys Gauss distribution.
@@ -79,7 +116,7 @@ class CNN():
         return conv
 
     def _add_pool(self, input, layer_index, ksize, stride, padding = 'SAME'):
-        """add a pooling layer to the model
+        """add a pooling layer to the model for 2D convolutional neural network 
         Args:
         	input: the input tensor to the layer
         	layer_index：the index of the layer
@@ -90,6 +127,11 @@ class CNN():
         string = 'pool_' + str(layer_index)
         with tf.variable_scope(string) as scope:
             return tf.nn.max_pool(input, ksize, stride, padding = padding,name = 'pool')
+
+    def _add_pool1d(self, input, layer_index, window_shape, stride, padding = 'SAME'):
+        string = 'pool_' + str(layer_index)
+        with tf.variable_scope(string) as scope:
+            return tf.nn.pool(input, window_shape, pooling_type = 'MAX', padding = padding)
 
     def _add_fclayer(self,input,layer_index,input_feature_num,output_feature_num,mean = 0.0,stddev = 1.0):
         """add a fully connect layer to the model
@@ -183,7 +225,12 @@ class CNN():
             ret.set_shape(set_output_shape)
             return ret
 
-    def _add_deconv_layer(self, input, filter, output_shape, stride):
+    def _add_deconv2d_layer(self, input, filter, output_shape, stride):
         input = tf.nn.relu(input)
         result = tf.nn.conv2d_transpose(input, filter, output_shape, stride)
+        return result
+
+    def _add_deconv1d_layer(self, input, filter, output_shape, stride):
+        input = tf.nn.relu(input)
+        result = tf.nn.conv1d_transpose(input, filter, output_shape, stride)
         return result
